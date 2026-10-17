@@ -1,0 +1,24 @@
+{
+    "name": "personal-agent-protocol",
+    "owner": {
+        "name": "Personal Agent Protocol"
+    },
+    "metadata": {
+        "description": "Skills for implementing and reviewing Personal Agent Protocol (Poppy).",
+        "version": "0.1"
+    },
+    "plugins": [
+        {
+            "name": "personal-agent-protocol",
+            "description": "Implement Personal Agent Protocol (Poppy) for a Company, with a validator, or review the docs.",
+            "source": "./",
+            "strict": false,
+            "homepage": "https://personalagentprotocol.org/kit/company",
+            "repository": "https://github.com/personal-agent-protocol/personal-agent-protocol",
+            "skills": [
+                "./skills/implement-personal-agent-protocol",
+                "./skills/poppy-review"
+            ]
+        }
+    ]
+}

@@ -5,7 +5,7 @@ import { Download, MessageSquare } from "lucide-react";
 import { Button } from "./button";
 
 // Buttons on the Path to 1.0 page that act on the comments in the corner of every page: whether the
-// comment bar shows at all, and downloading the agent kit with any comments the reader has left.
+// comment bar shows at all, and downloading the review kit with any comments the reader has left.
 
 // Sent with whether site commenting should be enabled.
 export const SET_COMMENTING_EVENT = "pap-comments:set";
@@ -48,7 +48,7 @@ export function DownloadKitButton() {
     return (
         <Button size="sm" onClick={() => window.dispatchEvent(new Event(DOWNLOAD_KIT_EVENT))}>
             <Download size={14} />
-            Download agent kit
+            Download review kit
         </Button>
     );
 }

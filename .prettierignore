@@ -1,3 +1,5 @@
 .next/
 out/
 pnpm-lock.yaml
+skills/
+.claude-plugin/

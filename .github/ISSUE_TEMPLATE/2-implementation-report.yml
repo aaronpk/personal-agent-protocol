@@ -32,6 +32,16 @@ body:
       validations:
           required: true
     - type: textarea
+      id: milestones
+      attributes:
+          label: Milestones completed
+          description: Optional. If you used the Company kit, the milestones you finished and the validator's results.
+    - type: textarea
+      id: kit
+      attributes:
+          label: Feedback on the kit
+          description: Optional. If you used the Company kit, what in its instructions, patterns, or validator was wrong or confusing.
+    - type: textarea
       id: worked
       attributes:
           label: What worked well

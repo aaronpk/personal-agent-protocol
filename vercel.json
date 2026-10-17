@@ -95,6 +95,21 @@
             "source": "/extensions/:path*",
             "destination": "/docs/extensions/:path*",
             "permanent": true
+        },
+        {
+            "source": "/docs/personal-agent-protocol-docs.zip",
+            "destination": "/kit/poppy-review.zip",
+            "permanent": true
+        },
+        {
+            "source": "/docs/review-kit.json",
+            "destination": "/kit/poppy-review.json",
+            "permanent": true
+        },
+        {
+            "source": "/kit",
+            "destination": "/kit/company",
+            "permanent": false
         }
     ],
     "headers": [

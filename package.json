@@ -10,7 +10,9 @@
         "dev": "next dev --hostname 0.0.0.0",
         "build": "next build",
         "typecheck": "tsc --noEmit",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "kit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-hooks.mjs scripts/kit.ts",
+        "test:kit": "node --test \"kit/company/validate/test/*.test.ts\""
     },
     "dependencies": {
         "@mdx-js/mdx": "3.1.1",

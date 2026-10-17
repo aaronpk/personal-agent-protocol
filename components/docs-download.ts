@@ -1,9 +1,10 @@
-import type { Kit } from "../lib/review-kit";
+import type { SkillKit } from "../lib/kit/serve";
 import { zip } from "../lib/zip";
 
-// Downloads from the comments menu: comment files, and the docs for an AI agent to review.
+// Downloads from the comments menu: comment files, and the review skill, which has the docs and
+// instructions for an AI agent to review them.
 
-const DOCS_ZIP = "personal-agent-protocol-docs.zip";
+const REVIEW_ZIP = "poppy-review.zip";
 
 export function downloadBlob(blob: Blob, fileName: string) {
     const url = URL.createObjectURL(blob);
@@ -14,24 +15,24 @@ export function downloadBlob(blob: Blob, fileName: string) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Downloads the docs zip. With comments, the zip is built in the browser from the same files as
-// the zip the site serves, with the comments added as comments.md.
+// Downloads the review skill's zip. With comments, the zip is built in the browser from the same
+// files as the zip the site serves, with the comments added as comments.md.
 export async function downloadDocs(comments?: string) {
     if (!comments) {
         const link = document.createElement("a");
-        link.href = `/docs/${DOCS_ZIP}`;
-        link.download = DOCS_ZIP;
+        link.href = `/kit/${REVIEW_ZIP}`;
+        link.download = REVIEW_ZIP;
         link.click();
         return;
     }
-    const response = await fetch("/docs/review-kit.json");
+    const response = await fetch("/kit/poppy-review.json");
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
     }
-    const kit: Kit = await response.json();
+    const kit: SkillKit = await response.json();
     const files = [...kit.files, { path: kit.commentsPath, content: comments }];
     downloadBlob(
-        new Blob([zip(files, new Date(kit.docsUpdated))], { type: "application/zip" }),
-        DOCS_ZIP,
+        new Blob([zip(files, new Date(kit.updated))], { type: "application/zip" }),
+        REVIEW_ZIP,
     );
 }

@@ -38,7 +38,7 @@ import {
 // the shortcut turns them on and off, on every page at once. Select text to comment on it. Comments are kept in this
 // browser's localStorage only. The menu on the comment count lists the pages with comments, shows
 // resolved ones, and clears them all. The "…" menu copies them as Markdown, exports and imports
-// them as a file, and downloads the agent kit: the docs for an AI agent to review. It shows even
+// them as a file, and downloads the review kit: the docs for an AI agent to review. It shows even
 // while comments are off. While they're on, dragging a file onto the page shows a box to drop it
 // in and import it.
 // Nothing on the page moves: when there's room to the right of the text, each comment floats there
@@ -884,14 +884,14 @@ export function Comments({ outline }: { outline: OutlinePage[] }) {
         setNote({ ok: true, text: `Saved ${fileName}. Others can import it from this menu.` });
     }
 
-    // Downloads the agent kit: the docs, with instructions for an AI agent to review them, and the
+    // Downloads the review kit: the docs, with instructions for an AI agent to review them, and the
     // open comments for it to respond to.
     async function downloadKit() {
         try {
             await downloadDocs(openAll.length ? commentsMarkdown() : undefined);
             setNote({
                 ok: true,
-                text: "Downloaded. Unzip it, open the folder in your coding agent, and ask it to review the docs.",
+                text: "Downloaded. Unzip it, open the folder in your coding agent, and ask it to follow SKILL.md to review the docs.",
             });
         } catch {
             setNote({
@@ -901,7 +901,7 @@ export function Comments({ outline }: { outline: OutlinePage[] }) {
         }
     }
 
-    // The buttons on the Path to 1.0 page enable or disable site commenting and download the agent
+    // The buttons on the Path to 1.0 page enable or disable site commenting and download the review
     // kit. Subscribed on every render, so the download uses the current comments.
     useEffect(() => {
         const set = (e: Event) =>
@@ -1310,7 +1310,7 @@ export function Comments({ outline }: { outline: OutlinePage[] }) {
                             aria-description={KIT_TIP}
                             onClick={downloadKit}
                         >
-                            Download agent kit
+                            Download review kit
                         </button>
                     </div>
                     <div className="cm-pages-foot">

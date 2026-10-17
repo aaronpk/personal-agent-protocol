@@ -1,11 +1,11 @@
 name: Spec feedback
-description: A point about the specification or docs, or a longer review from the agent kit or the site's comments.
+description: A point about the specification or docs, or a longer review from the review kit or the site's comments.
 labels: ["feedback"]
 body:
     - type: markdown
       attributes:
           value: |
-              For a single point, fill in the page and kind. For a longer review, paste a `review.md` from the [agent kit](https://personalagentprotocol.org/docs/path-to-1#feedback), or comments exported from the … menu next to Comments, and choose **Review (several points)**.
+              For a single point, fill in the page and kind. For a longer review, paste a `review.md` from the [review kit](https://personalagentprotocol.org/docs/path-to-1#feedback), or comments exported from the … menu next to Comments, and choose **Review (several points)**.
     - type: dropdown
       id: page
       attributes:
@@ -17,6 +17,7 @@ body:
               - Operations extension
               - Guides
               - Path to 1.0
+              - Company kit
               - Several pages
       validations:
           required: true

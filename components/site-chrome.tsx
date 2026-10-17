@@ -38,7 +38,8 @@ function GitHubIcon({ size }: { size: number }) {
 }
 
 // Pages with tabs show them under the header instead of the home page's section links. Docs pages
-// also show the draft status and, except on phones, a link to the repository.
+// also show the draft status and, except on phones, a link to the repository. The kit pages, laid
+// out like docs pages without tabs, show a link to the docs and the repository link.
 export function SiteHeader() {
     const pathname = usePathname() ?? "/";
     const currentTab = tabFor(pathname);
@@ -46,10 +47,11 @@ export function SiteHeader() {
     // The section links only make sense on the home page, so other pages without tabs, such as the
     // 404 page, show just the site name.
     const home = pathname.replace(/\/$/, "") === "";
+    const kit = pathname.startsWith("/kit/");
     return (
         <header className="site-header">
             {/* On docs pages, skip the section outline too. */}
-            <a className="skip-link" href={currentTab ? "#article" : "#main"}>
+            <a className="skip-link" href={currentTab || kit ? "#article" : "#main"}>
                 Skip to content
             </a>
             <div className="wrap">
@@ -78,7 +80,7 @@ export function SiteHeader() {
                         </ButtonLink>
                     </>
                 ) : null}
-                {currentTab ? (
+                {currentTab || kit ? (
                     <ButtonLink
                         variant="ghost"
                         iconOnly
@@ -90,6 +92,17 @@ export function SiteHeader() {
                         data-cta="github"
                     >
                         <GitHubIcon size={20} />
+                    </ButtonLink>
+                ) : null}
+                {kit ? (
+                    <ButtonLink
+                        variant="primary"
+                        size="sm"
+                        className="header-docs"
+                        href="/docs/introduction"
+                        data-cta="docs"
+                    >
+                        Read the docs
                     </ButtonLink>
                 ) : null}
             </div>

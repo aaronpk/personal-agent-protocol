@@ -39,10 +39,19 @@ html {
     scrollbar-gutter: stable;
 }
 
+/* The height of the sticky header: its top row, plus the docs tabs on pages that have them. */
+html {
+    --chrome-height: 65px;
+}
+
+html:has(.docs-tabs) {
+    --chrome-height: 110px;
+}
+
 /* Docs pages are long, so the left navigation jumps straight to a section. */
 html:has(.docs-layout) {
     scroll-behavior: auto;
-    scroll-padding-top: 124px;
+    scroll-padding-top: calc(var(--chrome-height) + 14px);
 }
 
 body {
@@ -227,6 +236,12 @@ code {
 .site-header .github-link {
     flex-shrink: 0;
     margin-left: auto;
+}
+
+/* On kit pages, the docs button sits to the right of the GitHub link. */
+.site-header > .wrap > .github-link + .btn.header-docs {
+    flex-shrink: 0;
+    margin-left: -16px;
 }
 
 /* Docs tabs: a second header row on docs pages. */
@@ -1319,13 +1334,12 @@ footer.site-footer .footer-github {
     padding: 0 28px;
 }
 
-/* The outline is pinned under the header from the start and scrolls on its own. 110px is the
-   header plus the docs tabs. */
+/* The outline is pinned under the header from the start and scrolls on its own. */
 .toc {
     position: sticky;
-    top: 110px;
+    top: var(--chrome-height);
     align-self: start;
-    max-height: calc(100vh - 110px);
+    max-height: calc(100vh - var(--chrome-height));
     overflow-y: auto;
     overscroll-behavior: contain;
     font-size: 13.5px;
@@ -1812,7 +1826,7 @@ footer.site-footer .footer-github {
 
     /* The header, docs tabs, and outline bar. */
     html:has(.docs-layout) {
-        scroll-padding-top: 170px;
+        scroll-padding-top: calc(var(--chrome-height) + 60px);
     }
 
     .doc {
@@ -1826,7 +1840,7 @@ footer.site-footer .footer-github {
 
     .toc {
         position: sticky;
-        top: 110px;
+        top: var(--chrome-height);
         z-index: 45;
         max-height: none;
         overflow: visible;
@@ -2732,4 +2746,128 @@ footer.site-footer .footer-github {
     .cm-bar {
         display: none;
     }
+}
+
+/* ---------- Company kit page ---------- */
+
+.arch {
+    overflow-x: auto;
+}
+
+.arch-svg {
+    display: block;
+    width: 100%;
+    min-width: 680px;
+    height: auto;
+    font-family: var(--font);
+}
+
+.arch-column {
+    font-family: var(--mono);
+    font-size: 12px;
+    fill: var(--ink-3);
+}
+
+.arch-box rect {
+    stroke-width: 1;
+}
+
+.arch-added rect {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+}
+
+.arch-changed rect {
+    fill: var(--bg);
+    stroke: var(--accent);
+    stroke-dasharray: 4 3;
+}
+
+.arch-existing rect {
+    fill: var(--bg-sunk);
+    stroke: var(--line-2);
+}
+
+.arch-title {
+    font-size: 14px;
+    font-weight: 600;
+    fill: var(--ink);
+}
+
+.arch-detail {
+    font-size: 12px;
+    fill: var(--ink-2);
+}
+
+.arch-line {
+    fill: none;
+    stroke: var(--line-2);
+    stroke-width: 1.5;
+}
+
+.arch-line-new {
+    stroke: var(--accent);
+}
+
+.kit-install {
+    max-width: 760px;
+}
+
+.kit-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 20px;
+}
+
+.kit-tabs button {
+    font: inherit;
+    font-size: 15px;
+    color: var(--ink-3);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.kit-tabs button:hover {
+    color: var(--ink);
+}
+
+.kit-tabs button.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+    font-weight: 500;
+}
+
+.kit-panel p {
+    color: var(--ink-2);
+    margin: 0 0 12px;
+}
+
+.kit-panel .code-block {
+    position: relative;
+    margin: 0 0 16px;
+}
+
+.kit-panel .code-block > pre {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 14px 52px 14px 18px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+}
+
+.kit-panel pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
 }
