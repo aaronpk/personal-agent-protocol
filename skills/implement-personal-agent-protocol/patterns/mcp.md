@@ -3,8 +3,11 @@
 A listed MCP server uses Streamable HTTP and MCP 2025-06-18 or later, accepts Session Tokens as its
 access tokens, accepts only tokens issued for its `url`, enforces their scopes, and publishes RFC
 9728 protected resource metadata whose `authorization_servers` includes `auth.issuer`
-([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)). MCP uses Bearer tokens, not DPoP
-([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
+([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)). MCP uses Bearer tokens. A new MCP
+server should also support DPoP by listing `dpop_signing_alg_values_supported` in its protected
+resource metadata, and Personal Agents then use DPoP there
+([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). Bearer-only is for existing
+servers that can't verify DPoP Proofs yet.
 
 ## A. The existing MCP server accepts Session Tokens
 
@@ -22,6 +25,8 @@ is the server's `url`.
 A new MCP server whose tools call the existing APIs with the verified identity.
 
 - Fits: Companies with APIs but no MCP server.
+- Needs: DPoP support, since it's new (4.3). It can reuse the DPoP verification of the existing APIs,
+  and still accepts Bearer tokens for MCP clients without DPoP.
 - Watch for: the tools' calls to existing APIs must not allow more than the Session Token does
   ([guides](https://personalagentprotocol.org/docs/0.2/guides#company-internal)).
 
@@ -29,6 +34,8 @@ A new MCP server whose tools call the existing APIs with the verified identity.
 
 - Bearer Session Tokens are accepted only on MCP APIs (4.3). A gateway that accepts them anywhere
   else defeats DPoP.
+- An MCP server that supports DPoP rejects a DPoP Session Token sent with the `Bearer` scheme
+  (RFC 9449 §7.1). Otherwise a copied DPoP token works there without its key.
 - MCP clients that don't implement Poppy can sign in through MCP's own authorization flow. The
   Company treats that as a new signed-in Session with no User ID, which ends when the sign-in is
   revoked or expires (section 6).

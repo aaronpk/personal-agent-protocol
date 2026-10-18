@@ -14,7 +14,7 @@ offer. A Company can start with one and add more later.
 
 - `openapi`: existing APIs, described in OpenAPI 3.0 or 3.1, accepting DPoP Session Tokens
   ([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)).
-- `mcp`: an MCP server accepting Bearer Session Tokens (section 6).
+- `mcp`: an MCP server accepting Bearer Session Tokens, and DPoP ones if it's new (section 6).
 - `conversations`: the Company Agent, through Poppy conversations
   ([section 7](https://personalagentprotocol.org/docs/0.2/spec#conversations)).
 - `web`: a browser-session endpoint so the Personal Agent's browser joins the Session

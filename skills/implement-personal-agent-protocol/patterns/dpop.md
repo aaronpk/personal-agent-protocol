@@ -77,4 +77,5 @@ for path rewrites, such as a gateway that strips a prefix.
 - Failed checks return `invalid_dpop_proof`, or `use_dpop_nonce` with a `DPoP-Nonce` header: as HTTP
   400 OAuth errors at the token endpoint, and as HTTP 401 with `WWW-Authenticate: DPoP` at APIs and
   conversation endpoints (4.3).
-- Accept Bearer Session Tokens only on MCP APIs, and require DPoP everywhere else (4.3).
+- Accept Bearer Session Tokens only on MCP APIs, and require DPoP everywhere else (4.3). An MCP server
+  that supports DPoP also accepts DPoP tokens, and rejects one sent with the `Bearer` scheme.

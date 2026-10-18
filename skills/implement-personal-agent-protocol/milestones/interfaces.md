@@ -13,7 +13,7 @@ staging.
 - [Section 7, Conversations](https://personalagentprotocol.org/docs/0.2/spec#conversations), 7.1–7.13,
   for `conversations`
 - [Section 5, Web browsing](https://personalagentprotocol.org/docs/0.2/spec#web-browsing), for `web`
-- [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens) again: Bearer tokens, narrower
+- [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens) again: MCP tokens, narrower
   tokens, rate limits
 - Guides: [Guest access](https://personalagentprotocol.org/docs/0.2/guides#company-guest),
   [Internal services](https://personalagentprotocol.org/docs/0.2/guides#company-internal),
@@ -46,8 +46,12 @@ Patterns: `patterns/openapi.md`, `patterns/mcp.md`, `patterns/conversations.md`,
   2025-06-18 or later ([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)).
 - The token endpoint issues a `Bearer` Session Token when a request has no `DPoP` header and has
   `resource` set to the MCP server's `url`
-  ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens), "Bearer tokens"). Issue Bearer
-  tokens only for MCP servers.
+  ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens), "MCP"). Issue Bearer tokens
+  only for MCP servers.
+- A new MCP server should also support DPoP: list `dpop_signing_alg_values_supported`, with `ES256`,
+  in its protected resource metadata, verify proofs, and reject a DPoP token sent as a Bearer token.
+  The token endpoint then issues a DPoP Session Token for a request with a proof and `resource` set
+  to the server's `url`. Keep accepting Bearer tokens for MCP clients without DPoP.
 - The MCP server accepts Session Tokens as its access tokens, only those issued for its `url`, and
   enforces their scopes.
 - Publish RFC 9728 protected resource metadata whose `authorization_servers` includes `auth.issuer`.

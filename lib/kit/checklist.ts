@@ -131,7 +131,7 @@ const OVERRIDES: [string, Party | "none"][] = [
     // 4.3's summary of how it differs from RFC 9449 repeats rules stated in full elsewhere.
     ["The token endpoint MUST reject a reused jti", "none"],
     ["Companies MUST accept ES256, and listing their algorithms", "none"],
-    ["Session Tokens for MCP are Bearer tokens, and Companies MUST require DPoP", "none"],
+    ["MCP servers accept Bearer Session Tokens, and also DPoP ones", "none"],
     ["Each sign-in request MUST include scope", "agent"],
     ["The client assertion's aud MUST be the Company's auth.issuer", "agent"],
     ["Account Tokens MUST NOT go in model context", "agent"],

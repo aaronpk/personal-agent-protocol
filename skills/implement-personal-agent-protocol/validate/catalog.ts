@@ -383,7 +383,7 @@ export const CATALOG: CheckInfo[] = [
         "mcp.bearer-token",
         "Token endpoint issues a Bearer Session Token for the MCP server's resource",
         "spec#sending-tokens",
-        "For MCP, the Personal Agent requests a Session Token without a proof, and the Company issues a Bearer token.",
+        "Otherwise, the Personal Agent requests a Session Token without a proof, and the Company issues a Bearer token.",
     ),
     interfaces(
         "mcp.bearer-accepted",

@@ -45,6 +45,12 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: DPoP errors at APIs and conversations.** `invalid_dpop_proof` and `use_dpop_nonce`
   come with HTTP 401 and the `WWW-Authenticate: DPoP` header. At the token endpoint they're OAuth
   errors with HTTP 400 ([4.3](/docs/spec#sending-tokens), [6](/docs/spec#apis)).
+- **DPoP at MCP servers.** An MCP server supports DPoP by listing
+  `dpop_signing_alg_values_supported` in its protected resource metadata. Personal Agents then use a
+  DPoP Session Token there, issued for the server's `resource`. The server still accepts Bearer
+  tokens for MCP clients without DPoP, and rejects a DPoP token sent as a Bearer token. New MCP
+  servers should support DPoP ([4.3](/docs/spec#sending-tokens), [6](/docs/spec#apis)).
+  [Issue #6](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/6)
 - **`rate_limited` body.** At the token endpoint and at endpoints this protocol or an extension
   defines, such as conversations and Mediated Sign-In, the body is `{"error": "rate_limited"}`.
   APIs and the website keep their own bodies ([4.3](/docs/spec#sending-tokens)).

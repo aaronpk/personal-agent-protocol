@@ -86,8 +86,8 @@ unchanged.
 - `scope` can narrow, never widen. Using the token doesn't extend its lifetime. Rotation is
   optional.
 - Expired or revoked: `invalid_grant`, and the Session continues signed out.
-- For MCP: the same grant without `DPoP` and with `resource` returns a Bearer token for that MCP
-  server ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
+- For MCP: the same grant with `resource` returns a token for that MCP server, a DPoP token with a
+  proof or a Bearer token without one ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
 
 **Signing out** ([4.9](https://personalagentprotocol.org/docs/0.2/spec#sign-out)). RFC 7009 revocation
 with the client assertion. Revoke the Account Token and sign out every Session signed in with it.
