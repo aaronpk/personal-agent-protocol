@@ -63,6 +63,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   They MUST NOT keep them anywhere else, including model context and logs. After the User or the
   Company revokes their access, they SHOULD NOT sign in again with stored credentials unless the
   User asks ([4.7](/docs/spec#mediated-sign-in)). [Issue #5](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/5)
+- **Work after a token expires.** A Session Token expiring isn't a sign-out, and work the Company
+  accepted with a valid token can continue. When access is revoked, the Company may stop work in
+  progress that uses the account, or let it finish ([4.9](/docs/spec#sign-out)).
+  [Issue #15](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/15)
 - **Sessions from plain MCP clients.** A Session started by an MCP client that doesn't implement
   this protocol has no User ID, can't continue signed out, and ends when its sign-in does
   ([6](/docs/spec#apis)).
@@ -109,6 +113,13 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   user disconnects. Companies ask for a one-time code on a personal agent's first mediated sign-in
   after the user disconnected it ([Guides](/docs/guides)).
   [Issue #5](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/5)
+- **Guides: key refetches, rate limits, and running work.** Companies refetch a personal agent's
+  keys at most once per interval, counting failures, and charge per-agent rate limits only after the
+  signature checks pass. Accepted work isn't stopped because a session token expired, and work that
+  can take consequential actions stops right away when access is revoked
+  ([Rotating keys](/docs/guides#both-key-rotation), [Rate limits](/docs/guides#both-rate-limits),
+  [Token lifetimes and sign-out](/docs/guides#company-lifetimes)).
+  [Issue #15](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/15)
 - **Guides: hosting several companies.** A new section for providers that host several companies,
   with an example of which storefronts share an issuer, metadata for an issuer with a path, and
   keeping each company's tokens and records apart on shared servers. Personal agents key user IDs

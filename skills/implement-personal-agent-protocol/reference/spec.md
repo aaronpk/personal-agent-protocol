@@ -725,6 +725,8 @@ The Company revokes the Account Token and signs out every Session signed in with
 
 Session Tokens issued before sign-out may still be valid. Companies SHOULD check on each request whether the Session is still signed in, so sign-out takes effect right away. A Company that doesn't SHOULD use much shorter Session Token lifetimes, such as a few minutes.
 
+A Session Token expiring isn't a sign-out. Work the Company accepted with a valid token, such as a long-running job, can continue after that token expires. When the account's access is revoked, by sign-out or by the User disconnecting the Personal Agent, the Company MAY stop work in progress that uses the account, or let it finish.
+
 To end a Session without signing out, the Personal Agent stops using it. The Account Token is unaffected and can start new Sessions.
 
 The User can also disconnect the Personal Agent from the Company's account settings. That revokes the Personal Agent's Account Tokens for that account and signs out its Sessions. The Personal Agent finds out when a request fails with `invalid_token` or `sign_in_required`, or the token endpoint returns `invalid_grant` for the Account Token. It then continues signed out.

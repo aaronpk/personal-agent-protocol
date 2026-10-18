@@ -75,7 +75,7 @@ Assertions and DPoP proofs are JWTs. To sign and verify them consistently:
 - [ ] Give every key a `kid`.
 - [ ] Publish a new key in `jwks_uri` before signing with it, early enough for companies' caches to pick it up.
 - [ ] Keep an old public key published until everything signed with it has expired.
-- [ ] Companies refetch `jwks_uri` when they see an unknown `kid`, with a rate limit so a stream of bad assertions can't trigger a fetch each time.
+- [ ] Companies refetch `jwks_uri` when they see an unknown `kid`. The refetch happens before any signature is checked, so anyone can trigger it by naming a real personal agent and a made-up `kid`. Refetch each `jwks_uri` at most once per interval, such as 30 seconds, and count failed fetches too. Otherwise a stream of bad assertions can flood the personal agent's server.
 - [ ] Rotating signing keys doesn't affect account tokens. They are tied to the `client_id`, not a key (4.8).
 
 ### Recommended: [Fetching metadata safely](https://personalagentprotocol.org/docs/0.2/guides#both-fetching)
@@ -90,7 +90,7 @@ Personal agents fetch `poppy.json` files and API descriptions. Companies fetch c
 
 ### Recommended: [Rate limits](https://personalagentprotocol.org/docs/0.2/guides#both-rate-limits)
 
-- [ ] Companies: limit by `client_id`, by user, and by session, so one busy personal agent or user doesn't crowd out others.
+- [ ] Companies: limit by `client_id`, by user, and by session, so one busy personal agent or user doesn't crowd out others. Count a request against a `client_id` only after its client assertion's signature checks pass. Otherwise anyone can name a personal agent and use up its limit, so its real users are refused. Limit unverified requests by network instead.
 - [ ] Companies: also send the `RateLimit` and `RateLimit-Policy` headers (IETF draft), so personal agents can slow down before they hit a limit.
 - [ ] Personal agents: keep track of limits for each company and share them across your tasks and users, rather than letting each task find the limit on its own.
 - [ ] Personal agents: prefer long polling or streaming over repeated short polls, and check for changes no more often than the task needs. Checking once a day for a price drop is usually enough.
@@ -253,6 +253,8 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 
 - [ ] Session tokens should last hours, not days (4.2).
 - [ ] Check on each request whether the session is still signed in, so sign-out takes effect right away. If you can't, keep session tokens to a few minutes (4.9).
+- [ ] Don't stop accepted work because the session token that started it expired. A job can outlast the token (4.9).
+- [ ] Where work in progress can take consequential actions on the user's account, such as payments or changes that are hard to undo, tie it to the account token, so revoking access stops it right away.
 - [ ] Give account tokens a lifetime that fits the account, such as 90 days, and expire ones that go unused sooner.
 - [ ] Revoke a user's account tokens when they reset their password or you suspect the account is compromised.
 

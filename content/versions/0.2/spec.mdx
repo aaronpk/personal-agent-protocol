@@ -930,6 +930,11 @@ Session Tokens issued before sign-out may still be valid. Companies SHOULD check
 whether the Session is still signed in, so sign-out takes effect right away. A Company that doesn't
 SHOULD use much shorter Session Token lifetimes, such as a few minutes.
 
+A Session Token expiring isn't a sign-out. Work the Company accepted with a valid token, such as a
+long-running job, can continue after that token expires. When the account's access is revoked, by
+sign-out or by the User disconnecting the Personal Agent, the Company MAY stop work in progress that
+uses the account, or let it finish.
+
 To end a Session without signing out, the Personal Agent stops using it. The Account Token is
 unaffected and can start new Sessions.
 
