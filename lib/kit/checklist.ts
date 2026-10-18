@@ -124,6 +124,7 @@ const OVERRIDES: [string, Party | "none"][] = [
     ["client_id MUST equal the URL", "agent"],
     ["jwks_uri and every entry in redirect_uris MUST be HTTPS URLs", "agent"],
     ["It MUST NOT contain or be derived from personal information", "agent"],
+    ["The Personal Agent holds the User IDs of each of its Users at every Company", "agent"],
     ["Session Tokens SHOULD last hours", "company"],
     ["If it does, it MUST encrypt the token", "company"],
     ["API calls and conversations MUST carry the Session Token", "agent"],

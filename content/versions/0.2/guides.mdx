@@ -138,6 +138,25 @@ can host several companies on one host, such as `https://auth.platform.example/o
 `https://auth.platform.example/books`, and each is a different company with its own user IDs
 ([3.2](/docs/spec#oauth-server)).
 
+Tell your users, such as in your privacy notice, that each company recognizes them across visits
+through their user ID, even when they're signed out, and that signing in lets the company link those
+earlier visits to their account.
+
+You MAY offer anonymous browsing, like a private browser window, with a new user ID for each
+anonymous browsing session ([4.2](/docs/spec#starting-sessions)). The company sees a new user each
+time, and nothing in the protocol links that browsing to the user's regular ID, their account, or
+their other anonymous sessions. Other signals, such as IP addresses, still can.
+
+- Create a random ID and a new DPoP key for each anonymous browsing session. Reusing a key would let
+  the company link the sessions that share it.
+- Discard both when the browsing session ends. Carts and conversations from it end with it.
+- Never sign in with an anonymous ID (MUST NOT, [4.2](/docs/spec#starting-sessions)). If the user
+  wants to sign in, switch to their regular ID in a new session.
+
+Keep the mapping of each user's IDs across companies confidential (MUST,
+[4.2](/docs/spec#starting-sessions)). Don't publish it or share it with third parties, other than
+service providers that process it for you.
+
 ### DPoP keys and proofs {#agent-dpop}
 
 - Generate a DPoP key pair for each user at each company ([4.3](/docs/spec#sending-tokens)). Make it

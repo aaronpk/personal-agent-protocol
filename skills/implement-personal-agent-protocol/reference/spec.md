@@ -244,6 +244,10 @@ Companies MAY keep allowlists or blocklists of Personal Agents by `client_id`, a
 
 The Personal Agent MUST give each of its Users a User ID for each Company, where a Company is identified by its `auth.issuer` (3.2). The ID is stable, so the Company sees the same User across Sessions. It is opaque and different for each Company, so Companies can't match Users with each other. Because the ID is scoped by issuer, this depends on each Company having its own issuer (3.2). It MUST NOT contain or be derived from personal information, such as an email address, phone number, or name, even with a keyed hash.
 
+A Personal Agent MAY instead give a User a new User ID for each anonymous browsing session, like a private browser window. The Company sees a new User each time. The Personal Agent uses the ID for nothing else, discards it when the browsing session ends, and MUST NOT sign in with a Session that uses it (4.4).
+
+The Personal Agent holds the User IDs of each of its Users at every Company, and MUST keep that mapping confidential: it MUST NOT publish it or share it with third parties, other than service providers that process it on the Personal Agent's behalf.
+
 To start a Session, the Personal Agent requests a Session Token from the Company's `token_endpoint` with the JWT bearer grant ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)). The assertion is a short-lived JWT signed with a key from its `jwks_uri`, naming itself in `iss` and the User in `sub`. Like every token request, it also carries the Personal Agent's client assertion (4.1) and a DPoP Proof (4.3).
 
 *Request: Personal Agent → Company*
