@@ -114,9 +114,11 @@ export function extraPlumbing(): string[] {
     return existingMdRoutes().filter((path) => !expected.has(path));
 }
 
-// Files that are missing, changed, or no longer needed.
+// Files that are missing, changed, or no longer needed. Vercel's build sees a different vercel.json
+// than the one in the repo, so it's only checked elsewhere: in local builds and `pnpm docs:sync`.
 export function stalePlumbing(): string[] {
     const stale = plumbingFiles()
+        .filter((file) => !(process.env.VERCEL && file.path === "vercel.json"))
         .filter((file) => {
             const path = join(ROOT, file.path);
             return !existsSync(path) || readFileSync(path, "utf8") !== file.content;
