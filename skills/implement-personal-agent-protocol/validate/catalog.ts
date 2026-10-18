@@ -123,7 +123,7 @@ export const CATALOG: CheckInfo[] = [
     ),
     foundation(
         "discovery.auth-present",
-        "auth is present when agent, apis, or web.browser_session_endpoint is",
+        "auth is present when agent, apis, feedback, or web.browser_session_endpoint is",
         "spec#fields",
         "Sessions need auth, so a Company without it can only be browsed as an ordinary website (section 5).",
     ),

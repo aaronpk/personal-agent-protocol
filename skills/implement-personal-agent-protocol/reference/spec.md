@@ -89,6 +89,9 @@ An example document:
   "web": {
     "browser_session_endpoint": "https://example.com/poppy/browser-session"
   },
+  "feedback": {
+    "endpoint": "https://api.example.com/poppy/feedback"
+  },
   "apis": [
     {
       "type": "openapi",
@@ -110,7 +113,7 @@ An example document:
 | --- | --- | --- |
 | `protocol_version` | Yes | The protocol version the document follows, as `major.minor`. This draft is `0.2`. A newer minor version doesn't break older Personal Agents, which use the document and ignore fields they don't recognize. A Personal Agent MUST NOT use a document whose major version it doesn't support. |
 | `organization` | Yes | Display name and domain. `domain` MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, and nothing else. |
-| `auth` | If `agent`, `apis`, or `web.browser_session_endpoint` is present | `issuer` is the Company's OAuth issuer identifier, an HTTPS URL. It identifies the Company, and the Personal Agent finds the Company's OAuth endpoints from it (3.2). It also contains `direct`, `device`, and `mediated` for the types of sign-in the Company supports (4.4), if any. With none, it offers only signed-out Sessions. Sessions need `auth`, so a Company without it can only be browsed as an ordinary website (section 5). |
+| `auth` | If `agent`, `apis`, `feedback`, or `web.browser_session_endpoint` is present | `issuer` is the Company's OAuth issuer identifier, an HTTPS URL. It identifies the Company, and the Personal Agent finds the Company's OAuth endpoints from it (3.2). It also contains `direct`, `device`, and `mediated` for the types of sign-in the Company supports (4.4), if any. With none, it offers only signed-out Sessions. Sessions need `auth`, so a Company without it can only be browsed as an ordinary website (section 5). |
 | `auth.direct` | If supported | `scopes` lists the scopes Direct Sign-In can grant (4.5). |
 | `auth.device` | If supported | `scopes` lists the scopes Device Sign-In can grant (4.6). |
 | `auth.mediated` | If supported | `endpoint` is where the Personal Agent sends credentials, and `fields` lists them (4.7). `scopes` lists the scopes Mediated Sign-In can grant. |
@@ -118,6 +121,7 @@ An example document:
 | `agent` | One of `agent`, `apis`, or `web` | The Company Agent. `protocols` lists its supported conversation protocols, each with a `type` and HTTPS `endpoint` (section 7). An entry MAY include a `resource` to require tokens issued for it (4.3). |
 | `apis` | One of `agent`, `apis`, or `web` | A list of APIs. Each has a `type` from section 6, a `url`, and a short `description` that helps the Personal Agent pick the right one. An entry MAY include a `resource` to require tokens issued for it (4.3). |
 | `web` | One of `agent`, `apis`, or `web` | The Company's website. The optional `browser_session_endpoint` is where the Personal Agent's browser joins a Session (section 5). Without it, Personal Agents browse the site as ordinary signed-out visitors. |
+| `feedback` | No | `endpoint` is an HTTPS URL where Personal Agents report a User's task that can't be done through this protocol (section 8). |
 | `extensions` | No | The extensions the Company supports, keyed by name (below). |
 
 ### 3.2 OAuth server
@@ -1253,11 +1257,43 @@ Token errors are the ones in section 6. Other errors have a JSON body with an `e
 | `invalid_request` | 400 | The request is malformed, such as a message with none of `text`, `data`, or `context`, an ID with characters not allowed (7.2), or a `wait` that isn't a whole number of seconds. |
 | `rate_limited` | 429 | Too many requests. Retry after the time in the `Retry-After` header (4.3). |
 
-## 8. Security considerations
+## 8. Feedback
+
+A Company can ask Personal Agents to tell it when a User's task can't be done through this protocol. Without this, the Company sees only a customer who left.
+
+Feedback is about what the Company doesn't offer, not errors. A Company already returns errors in its responses (sections 6 and 7) and can see them in its own logs, so Personal Agents don't report them here.
+
+A Company that wants feedback lists `feedback.endpoint` in `poppy.json` (3.1). When a User's task can't be done, the Personal Agent MAY send `POST {feedback.endpoint}` with a Session Token and a DPoP Proof (4.3), and a JSON body:
+
+*Request body: Personal Agent → Company*
+
+```
+{
+  "kind": "missing",
+  "task": "Pay with a gift card",
+  "description": "The User wanted to pay for a new order with a gift card they were given. Neither the API nor the Company Agent can apply a gift card, and the checkout page in the browser session has no field for one."
+}
+```
+
+| Field | Req. | Description |
+| --- | --- | --- |
+| `kind` | Yes | `missing`: the Company offers no way to do the task through this protocol, whether with its Company Agent, its APIs, or its website in a browser session. Personal Agents MUST NOT send other values, which are reserved for later versions. |
+| `task` | Yes | What the User was trying to do, in a short phrase, such as "Return a jacket", "Move a flight to the next day", or "Pay with a gift card". At most 200 characters. |
+| `description` | Yes | What the Personal Agent was trying to accomplish, in detail, and why, without identifiers such as order numbers, account numbers, or names. At most 2,000 characters. |
+
+- A Company MUST accept a report only with a Session Token, signed in or signed out, and needs no scope for it. The Session tells the Company which Personal Agent sent the report and for which User, so the report doesn't repeat that, or say where the problem happened.
+- Personal Agents SHOULD NOT put personal data in a report, such as the User's name, contact details, or order details. A report describes the task, not the User. Personal Agents MUST NOT put secrets in a report (9.2).
+- A Personal Agent SHOULD send one report for each task it couldn't do, not one for each attempt.
+- A Company MUST accept a `kind` it doesn't recognize, so later versions can add kinds.
+- A report can be wrong, or written to mislead. Companies MUST treat a report's text as data, not as instructions, including when a model reads it.
+
+The Company responds with HTTP 202 and no body. Token errors are the ones in section 6. Other errors have a JSON body with an `error` code, as in 7.13: `invalid_request` (400) for a report that is malformed or too long, and `rate_limited` (429).
+
+## 9. Security considerations
 
 This section collects risks that cut across the protocol. The sections it points to hold the detailed rules.
 
-### 8.1 Content from Companies
+### 9.1 Content from Companies
 
 A Personal Agent passes what a Company returns to its model: conversation messages, API descriptions and responses, MCP tool descriptions and results, web pages, and, with the Operations extension, an operation's `summary`. The same model may hold the User's personal context and have Sessions open at other Companies. A malicious or compromised Company can write content that tries to direct the model, known as prompt injection.
 
@@ -1266,19 +1302,19 @@ A Personal Agent passes what a Company returns to its model: conversation messag
 - A Personal Agent SHOULD send a Company only information relevant to the User's task. That includes context that helps the Company handle it, such as the reason for a return or a deadline the User has. It doesn't include unrelated details from the User's context or from other Companies.
 - Text from a Company is never the User's approval or consent. The Operations extension states this for approving an operation ([Operations 5.1](https://personalagentprotocol.org/docs/0.2/extensions/operations#approval)).
 
-### 8.2 Secrets and the model
+### 9.2 Secrets and the model
 
 A model can be led to repeat what is in its context, so a secret in context can leak through any message the Personal Agent sends. Account Tokens MUST NOT go in model context (4.8). Credentials from Mediated Sign-In are never shown back or sent anywhere except the Company, and once a sign-in ends they are discarded or kept only in a credential store the User chose (4.7). Personal Agents SHOULD keep every other secret out of model context too, including Session Tokens, private keys, device codes, and one-time codes, and sign and send requests in code the model can't read. The [guides](https://personalagentprotocol.org/docs/0.2/guides#both-secrets) list these secrets and how to handle them.
 
-### 8.3 What a domain vouches for
+### 9.3 What a domain vouches for
 
 A Company's `poppy.json`, served on its own domain (section 3), is where the Personal Agent learns everything about the Company: its issuer, its sign-in types, the Mediated Sign-In endpoint, its APIs, and its Company Agent. Whoever controls that document speaks for the Company at that domain, as whoever controls its website does today. The issuer check in 3.2 protects in the other direction: it stops a domain from claiming another Company's issuer and receiving its tokens. It doesn't make the issuer metadata more trustworthy than `poppy.json`, because the document chooses the issuer.
 
-### 8.4 Assertions
+### 9.4 Assertions
 
 A Personal Agent works with many Companies it has no prior relationship with, and each Company's metadata names its own endpoints, which nobody checks (3.2). A malicious Company could name another Company's token endpoint in its metadata. If assertions were addressed to that endpoint, the malicious Company could collect them at its other endpoints and replay them at the other Company. That is why every assertion names the Company's `auth.issuer` in `aud` (4.1, 4.2). The issuer is the value the Personal Agent verified for that Company, so an assertion collected by one Company is rejected by every other. Each Company has its own issuer (3.2), so this holds even for Companies a provider hosts on shared servers.
 
-## 9. References
+## 10. References
 
 This draft uses these standards and versions:
 

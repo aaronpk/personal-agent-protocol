@@ -71,6 +71,15 @@
                 }
             }
         },
+        "feedback": {
+            "type": "object",
+            "required": ["endpoint"],
+            "properties": {
+                "endpoint": {
+                    "$ref": "#/$defs/https_url"
+                }
+            }
+        },
         "web": {
             "type": "object",
             "properties": {
@@ -107,6 +116,7 @@
                 "anyOf": [
                     { "required": ["agent"] },
                     { "required": ["apis"] },
+                    { "required": ["feedback"] },
                     {
                         "required": ["web"],
                         "properties": { "web": { "required": ["browser_session_endpoint"] } }

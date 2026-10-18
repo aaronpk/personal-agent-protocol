@@ -50,6 +50,7 @@ const EXAMPLES: Record<string, Target> = {
     "direct-conversations:1": "conversation-request.schema.json",
     "direct-conversations:2": "event.schema.json",
     "conversation-sign-in:1": "event.schema.json",
+    "feedback:1": "feedback-report.schema.json",
 };
 
 export function checkSpecExamples(schemas: Record<string, object>): string[] {

@@ -52,6 +52,7 @@ const SECTIONS: Record<string, Record<string, Milestone>> = {
         "conversation-sign-in": "sign-in",
         closing: "interfaces",
         "conversation-errors": "interfaces",
+        feedback: "interfaces",
         "untrusted-content": "foundation",
         secrets: "foundation",
         trust: "foundation",

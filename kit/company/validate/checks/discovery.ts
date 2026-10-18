@@ -255,18 +255,20 @@ export function checkPoppyDocument(
     const needsAuth =
         poppy.agent !== undefined ||
         poppy.apis !== undefined ||
+        poppy.feedback !== undefined ||
         poppy.web?.browser_session_endpoint !== undefined;
     if (needsAuth && poppy.auth === undefined) {
         const present = [
             poppy.agent !== undefined ? "agent" : "",
             poppy.apis !== undefined ? "apis" : "",
+            poppy.feedback !== undefined ? "feedback" : "",
             poppy.web?.browser_session_endpoint !== undefined ? "web.browser_session_endpoint" : "",
         ].filter(Boolean);
         r.fail("discovery.auth-present", {
             exchange: ex,
             got: `${present.join(", ")} present, but no auth`,
             expected: "auth with an issuer",
-            cause: "Sessions need auth.issuer: Session Tokens for the Company Agent, APIs, and browser sessions come from the issuer's token endpoint. Add auth, or remove the entries that need it.",
+            cause: "Sessions need auth.issuer: Session Tokens for the Company Agent, APIs, feedback, and browser sessions come from the issuer's token endpoint. Add auth, or remove the entries that need it.",
         });
     } else {
         r.pass("discovery.auth-present", {

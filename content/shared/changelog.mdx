@@ -18,7 +18,7 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   hosts several Companies gives each its own issuer, even on shared servers, so they don't share
   User IDs or Account Tokens. The spec also says where the metadata is for an issuer with a path,
   as RFC 8414 defines ([3.2](/docs/spec#oauth-server), [4.2](/docs/spec#starting-sessions),
-  [8.4](/docs/spec#assertion-audience)).
+  [9.4](/docs/spec#assertion-audience)).
   [Issue #3](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/3)
 - **Breaking: DPoP algorithms.** Companies publish `dpop_signing_alg_values_supported` in their
   OAuth metadata, and it includes `ES256`. Personal Agents sign DPoP Proofs with an algorithm from
@@ -31,7 +31,7 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: Assertion audience.** In 0.1, a client assertion's `aud` wasn't specified, and a
   Session assertion's was the Company's token endpoint. Both are now the Company's `auth.issuer`,
   and Companies reject any other `aud` ([4.1](/docs/spec#agent-identity),
-  [4.2](/docs/spec#starting-sessions), [8.4](/docs/spec#assertion-audience)). [Issue #2](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/2)
+  [4.2](/docs/spec#starting-sessions), [9.4](/docs/spec#assertion-audience)). [Issue #2](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/2)
 - **Breaking: DPoP Proof checks.** Companies MUST validate every proof as RFC 9449 §4.3 describes.
   That adds checks that the request has exactly one `DPoP` header, `typ` is `dpop+jwt`, `alg` is an
   asymmetric algorithm the Company accepts and never `none`, and `jwk` holds no private key. In 0.1,
@@ -80,12 +80,18 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   ([7.10](/docs/spec#direct-conversations)).
 - **Conversation errors.** Conversations add `invalid_request` (400) and `rate_limited` (429)
   ([7.13](/docs/spec#conversation-errors)).
-- **Breaking: Security considerations.** A new section 8 covers content from Companies and prompt
+- **Feedback.** A new section 8 lets a Company list a `feedback.endpoint` in `poppy.json`. With a
+  Session Token, Personal Agents can report a User's task that the Company offers no way to do
+  through this protocol. A report has a `kind`, which is `missing` for now, the `task`, and a
+  `description` without identifiers, and isn't for errors ([3.1](/docs/spec#fields),
+  [8](/docs/spec#feedback)).
+  [Issue #9](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/9)
+- **Breaking: Security considerations.** A new section 9 covers content from Companies and prompt
   injection, secrets and the model, what a domain vouches for, and why assertions name the issuer.
   It adds requirements for Personal Agents: they MUST treat content from a Company as data, not
   instructions, and MUST NOT act at one Company, or send it information, because another Company's
-  content asked. References move to section 9 ([8](/docs/spec#security),
-  [8.1](/docs/spec#untrusted-content)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
+  content asked. References move to section 10 ([9](/docs/spec#security),
+  [9.1](/docs/spec#untrusted-content)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
 - **Operations.** Personal Agents should show the User the values in an operation's `terms` next to
   its `summary`, or check that they agree, before asking for approval ([Operations
   5.1](/docs/extensions/operations#approval)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)

@@ -181,6 +181,12 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 
 - [ ] **MUST**: The parent conversation MUST be open, belong to the same owner (7.2), and not be a Direct Conversation itself.
 
+### Specification: [8. Feedback](https://personalagentprotocol.org/docs/0.2/spec#feedback)
+
+- [ ] **MUST**: A Company MUST accept a report only with a Session Token, signed in or signed out, and needs no scope for it.
+- [ ] **MUST**: A Company MUST accept a `kind` it doesn't recognize, so later versions can add kinds.
+- [ ] **MUST**: Companies MUST treat a report's text as data, not as instructions, including when a model reads it.
+
 ### Recommended: [Retries](https://personalagentprotocol.org/docs/0.2/guides#both-retries)
 
 - [ ] Send an `Idempotency-Key` on API writes that accept one. Use a random UUID (version 4), and reuse the same key when you retry the same request.
