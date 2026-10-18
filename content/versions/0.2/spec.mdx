@@ -143,12 +143,20 @@ A Company is identified by its `auth.issuer`. Several domains MAY name the same 
 Company with a domain for each country, and they are then one Company: the same User IDs (4.2),
 Sessions, and Account Tokens apply to all of them.
 
+An issuer MUST represent exactly one Company. A provider that hosts several Companies MUST give each
+its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers.
+Otherwise the Companies would be one Company under this protocol: Personal Agents would send each of
+them the same User IDs, an Account Token from one would be valid at the others, and `poppy_domains`
+would list all of them.
+
 The issuer MUST publish OAuth Authorization Server Metadata ([RFC
 8414](https://www.rfc-editor.org/rfc/rfc8414)), and `poppy_domains` in it MUST list every domain
-whose `poppy.json` names the issuer. Before using a Company's `poppy.json`, the Personal Agent
-fetches the metadata and MUST check that its `issuer` exactly matches `auth.issuer` and that
-`poppy_domains` includes `organization.domain`, ignoring case. Otherwise any domain could claim
-another Company's issuer and receive its tokens.
+whose `poppy.json` names the issuer. The metadata is at the URL RFC 8414 (section 3.1) defines,
+which puts `/.well-known/oauth-authorization-server` between the issuer's host and its path, if it
+has one, such as `https://auth.provider.example/.well-known/oauth-authorization-server/shop-a`.
+Before using a Company's `poppy.json`, the Personal Agent fetches the metadata and MUST check that
+its `issuer` exactly matches `auth.issuer` and that `poppy_domains` includes `organization.domain`,
+ignoring case. Otherwise any domain could claim another Company's issuer and receive its tokens.
 
 ```json label="GET https://auth.example.com/.well-known/oauth-authorization-server"
 {
@@ -294,8 +302,9 @@ Company that doesn't require registration MAY also limit how many new `client_id
 The Personal Agent MUST give each of its Users a User ID for each Company, where a Company is
 identified by its `auth.issuer` (3.2). The ID is stable, so the Company sees the same User across
 Sessions. It is opaque and different for each Company, so Companies can't match Users with each
-other. It MUST NOT contain or be derived from personal information, such as an email address, phone
-number, or name, even with a keyed hash.
+other. Because the ID is scoped by issuer, this depends on each Company having its own issuer (3.2).
+It MUST NOT contain or be derived from personal information, such as an email address, phone number,
+or name, even with a keyed hash.
 
 To start a Session, the Personal Agent requests a Session Token from the Company's `token_endpoint`
 with the JWT bearer grant ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)). The assertion is a
@@ -1613,7 +1622,8 @@ Company's token endpoint in its metadata. If assertions were addressed to that e
 malicious Company could collect them at its other endpoints and replay them at the other Company.
 That is why every assertion names the Company's `auth.issuer` in `aud` (4.1, 4.2). The issuer is the
 value the Personal Agent verified for that Company, so an assertion collected by one Company is
-rejected by every other.
+rejected by every other. Each Company has its own issuer (3.2), so this holds even for Companies a
+provider hosts on shared servers.
 
 ## 9. References {#references}
 

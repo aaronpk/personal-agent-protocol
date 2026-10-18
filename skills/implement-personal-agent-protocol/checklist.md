@@ -21,6 +21,8 @@ are left out.
 
 ### Specification: [3.2 OAuth server](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)
 
+- [ ] **MUST**: An issuer MUST represent exactly one Company.
+- [ ] **MUST**: A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers.
 - [ ] **MUST**: The issuer MUST publish OAuth Authorization Server Metadata (RFC 8414), and `poppy_domains` in it MUST list every domain whose `poppy.json` names the issuer.
 - [ ] **MUST**: Companies MUST publish it, and it MUST include `ES256`.
 
