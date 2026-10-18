@@ -75,6 +75,7 @@ const SECTIONS: Record<string, Record<string, Milestone>> = {
         "company-browsing": "interfaces",
         "company-scopes": "sign-in",
         "company-internal": "foundation",
+        "company-hosting": "foundation",
         "company-guest": "interfaces",
         "company-conversations": "interfaces",
         "company-errors": "interfaces",

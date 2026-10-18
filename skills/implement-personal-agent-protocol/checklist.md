@@ -127,6 +127,14 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 - [ ] Verify the token at the edge, then pass the verified `client_id`, user ID, account, and scopes to internal services through a gateway or service credentials.
 - [ ] Internal credentials used for a request shouldn't allow more than the session token does.
 
+### Recommended: [Hosting several companies](https://personalagentprotocol.org/docs/0.2/guides#company-hosting)
+
+- [ ] Publish metadata for each issuer at its own URL, such as `https://auth.platform.example/.well-known/oauth-authorization-server/outfitters` (3.2). Its `issuer` is the full issuer, and its `poppy_domains` lists only that company's storefronts.
+- [ ] Serve each storefront's `poppy.json` on the storefront's own domain. A document redirected to the platform's domain speaks for the platform, not the storefront (3.1).
+- [ ] Companies can share a token endpoint, servers, and signing keys. Only the issuer decides which company a token belongs to.
+- [ ] Record the issuer with every session and account token, and check it on every request. A session token or account token from Outfitters must not work at Books, even when both are served by the same code.
+- [ ] Don't use one company's records for another. A user's sessions, user IDs, and accounts at one company are unknown to every other company the platform hosts.
+
 ## Interfaces
 
 ### Specification: [5. Web browsing](https://personalagentprotocol.org/docs/0.2/spec#web-browsing)

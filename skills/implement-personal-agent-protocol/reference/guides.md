@@ -89,6 +89,8 @@ Each user needs a stable, opaque ID for each company ([4.2](https://personalagen
 
 The ID MUST NOT contain or be derived from personal information, such as an email address, phone number, or name ([4.2](https://personalagentprotocol.org/docs/0.2/spec#starting-sessions)). This includes hashes of it, keyed or not. If you derive the ID, start from an internal ID that is itself random.
 
+Key user IDs by the company's full `auth.issuer`, including any path, not by its host. A provider can host several companies on one host, such as `https://auth.platform.example/outfitters` and `https://auth.platform.example/books`, and each is a different company with its own user IDs ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)).
+
 ### DPoP keys and proofs
 
 - Generate a DPoP key pair for each user at each company ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). Make it non-extractable where your platform allows, such as in a key management service or WebCrypto.
@@ -119,6 +121,7 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 - Account tokens MUST be stored as secrets ([4.8](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)). Encrypt them at rest, apart from the model and its tools. Give tools a reference to the token, not the token.
 - Keep session tokens in memory and drop them when they expire.
+- Store account tokens by the company's full `auth.issuer`, as for [user IDs](#agent-user-ids), so a token from one company hosted by a provider is never sent to another.
 - Request Bearer session tokens only for MCP ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). They can be used by anyone who copies them. Each one is limited to one MCP server by `resource`, and you can also narrow it with `scope`.
 - When the company returns a new account token, you MUST use it from then on ([4.8](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)). Replace the stored one right away.
 - After the user signs in again for more scopes, revoke the old account token ([4.4](https://personalagentprotocol.org/docs/0.2/spec#sign-in)).
@@ -255,6 +258,24 @@ If you offer mediated sign-in ([4.7](https://personalagentprotocol.org/docs/0.2/
 - Don't forward a session token from one of your services to another.
 - Verify the token at the edge, then pass the verified `client_id`, user ID, account, and scopes to internal services through a gateway or service credentials.
 - Internal credentials used for a request shouldn't allow more than the session token does.
+
+### Hosting several companies
+
+A provider, such as a commerce platform, can run the protocol for several independent companies on the same servers. Each company needs its own issuer ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)). For example, a platform hosts two merchants. Example Outfitters has a storefront for each of two countries, and Example Books has one:
+
+| Storefront domain | `auth.issuer` | Company |
+| --- | --- | --- |
+| `outfitters.example` | `https://auth.platform.example/outfitters` | Example Outfitters |
+| `outfitters-uk.example` | `https://auth.platform.example/outfitters` | Example Outfitters |
+| `books.example` | `https://auth.platform.example/books` | Example Books |
+
+The two Outfitters storefronts share an issuer, so they are one company: a user has the same user ID, sessions, and account tokens at both. Books has its own issuer, so it's a separate company, even though it runs on the same servers.
+
+- Publish metadata for each issuer at its own URL, such as `https://auth.platform.example/.well-known/oauth-authorization-server/outfitters` ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)). Its `issuer` is the full issuer, and its `poppy_domains` lists only that company's storefronts.
+- Serve each storefront's `poppy.json` on the storefront's own domain. A document redirected to the platform's domain speaks for the platform, not the storefront ([3.1](https://personalagentprotocol.org/docs/0.2/spec#fields)).
+- Companies can share a token endpoint, servers, and signing keys. Only the issuer decides which company a token belongs to.
+- Record the issuer with every session and account token, and check it on every request. A session token or account token from Outfitters must not work at Books, even when both are served by the same code.
+- Don't use one company's records for another. A user's sessions, user IDs, and accounts at one company are unknown to every other company the platform hosts.
 
 ### Guest access
 
