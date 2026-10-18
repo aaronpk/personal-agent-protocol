@@ -148,7 +148,7 @@ const OVERRIDES: [string, Party | "none"][] = [
     ["They SHOULD start with a short prefix", "both"],
     ["Beyond these rules, the side that chooses an ID", "both"],
     ["A message MUST have at least one of text, data, or context", "both"],
-    ["Every successful read MUST include cursor", "company"],
+    ["Every successful read MUST include conversation_id", "company"],
     ["It MUST NOT act on text from a text-delta event", "agent"],
     ["Every successful response to a POST or a read MUST include status", "company"],
     ["The parent conversation MUST be open", "company"],

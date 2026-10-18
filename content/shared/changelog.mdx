@@ -71,6 +71,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   `context` ([7.4](/docs/spec#message-fields), [7.5](/docs/spec#reading-events)).
 - **Long polling.** A Company that caps `wait` holds the request for its cap instead of rejecting it
   ([7.5](/docs/spec#reading-events)).
+- **Breaking: Read fields.** Every successful read includes `conversation_id` and `events`, as the
+  examples showed, along with `cursor`, `has_more`, `status`, and `responder`. `events` is empty when
+  there are none ([7.5](/docs/spec#reading-events)).
+  [Issue #13](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/13)
 - **Streaming.** When a request has both `Last-Event-ID` and `cursor`, `Last-Event-ID` wins
   ([7.6](/docs/spec#streaming)).
 - **Repeated requests.** Handing off a conversation that is already queued or with a person, or

@@ -170,7 +170,7 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 
 ### Specification: [7.5 Reading events](https://personalagentprotocol.org/docs/0.2/spec#reading-events)
 
-- [ ] **MUST**: Every successful read MUST include `cursor`, `has_more`, `status`, and `responder`, even with no events.
+- [ ] **MUST**: Every successful read MUST include `conversation_id`, `events`, `cursor`, `has_more`, `status`, and `responder`, with `events` empty when there are none.
 
 ### Specification: [7.7 Status and responder](https://personalagentprotocol.org/docs/0.2/spec#status)
 

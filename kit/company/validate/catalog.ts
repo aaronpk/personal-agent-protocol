@@ -449,9 +449,9 @@ export const CATALOG: CheckInfo[] = [
     ),
     interfaces(
         "conversations.events-read",
-        "Reading events returns cursor, has_more, status, and responder",
+        "Reading events returns conversation_id, events, cursor, has_more, status, and responder",
         "spec#reading-events",
-        "Every successful read MUST include cursor, has_more, status, and responder, even with no events.",
+        "Every successful read MUST include conversation_id, events, cursor, has_more, status, and responder, with events empty when there are none.",
     ),
     interfaces(
         "conversations.events-schema",

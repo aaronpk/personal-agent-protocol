@@ -1051,7 +1051,7 @@ Personal Agents MUST skip event types they don't recognize, so later versions an
 - `cursor` and `wait` are query parameters, here and on the `POST` requests in 7.3.
 - Each event's `id` is also a cursor. Without a `cursor`, the read starts at the beginning of the conversation. Cursors are opaque, so the Personal Agent MUST NOT compare or sort them.
 - `wait` is a whole number of seconds, 0 or more. The Company holds the request for up to `wait` seconds until there is an event to return. It MAY return sooner, or cap `wait`: a larger `wait` is held only as long as the cap, not rejected. Without `wait`, it returns right away. A read that times out returns an empty `events` list.
-- Every successful read MUST include `cursor`, `has_more`, `status`, and `responder`, even with no events. `cursor` is the last event returned, or the request's cursor if there were none. When `has_more` is `true`, the Personal Agent reads again right away.
+- Every successful read MUST include `conversation_id`, `events`, `cursor`, `has_more`, `status`, and `responder`, with `events` empty when there are none. `cursor` is the last event returned, or the request's cursor if there were none. When `has_more` is `true`, the Personal Agent reads again right away.
 - The Personal Agent handles events in order and saves the cursor after them. A read after a reconnect can return events again, so it skips event IDs it has already handled.
 - The Company keeps events for as long as it chooses. A cursor for events it no longer has returns `cursor_expired`. The Personal Agent then reads from the beginning and SHOULD tell the User that part of the conversation is missing.
 

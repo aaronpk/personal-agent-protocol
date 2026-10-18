@@ -283,15 +283,20 @@ async function conversationChecks(
 
     const read = await readAll((m, u) => send(m, u), conv);
     const lastJson = read.last?.json as Record<string, unknown> | undefined;
-    const missing = ["cursor", "has_more", "status", "responder"].filter(
-        (k) => !lastJson || !(k in lastJson),
-    );
+    const missing = [
+        "conversation_id",
+        "events",
+        "cursor",
+        "has_more",
+        "status",
+        "responder",
+    ].filter((k) => !lastJson || !(k in lastJson));
     if (read.last?.status === 200 && missing.length === 0) r.pass("conversations.events-read");
     else
         r.fail("conversations.events-read", {
             exchange: read.last,
             got: missing.length ? `missing ${missing.join(", ")}` : undefined,
-            expected: "200 with events, cursor, has_more, status, and responder",
+            expected: "200 with conversation_id, events, cursor, has_more, status, and responder",
         });
 
     const eventErrors = read.exchanges.flatMap((ex) =>

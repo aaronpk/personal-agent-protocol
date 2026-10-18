@@ -1315,8 +1315,8 @@ types.
   seconds until there is an event to return. It MAY return sooner, or cap `wait`: a larger `wait` is
   held only as long as the cap, not rejected. Without `wait`, it returns right away. A read that
   times out returns an empty `events` list.
-- Every successful read MUST include `cursor`, `has_more`, `status`, and `responder`, even with no
-  events. `cursor` is the last event returned, or the request's cursor if there were none. When
+- Every successful read MUST include `conversation_id`, `events`, `cursor`, `has_more`, `status`, and
+  `responder`, with `events` empty when there are none. `cursor` is the last event returned, or the request's cursor if there were none. When
   `has_more` is `true`, the Personal Agent reads again right away.
 - The Personal Agent handles events in order and saves the cursor after them. A read after a
   reconnect can return events again, so it skips event IDs it has already handled.
