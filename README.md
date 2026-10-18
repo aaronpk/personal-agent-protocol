@@ -37,23 +37,26 @@ has been published for four days.
 ## Pages
 
 - `/`: the overview, with interactive walkthroughs
-- `/docs/introduction`, `/docs/spec`, `/docs/extensions`, `/docs/extensions/operations`,
-  `/docs/guides`, `/docs/path-to-1`: the docs
+- `/docs/introduction`, `/docs/path-to-1`, `/docs/changelog`: the pages with one copy
+- `/docs/<version>/spec`, `/docs/<version>/extensions`, `/docs/<version>/extensions/operations`,
+  `/docs/<version>/guides`: each version of the protocol's pages, such as `/docs/0.2/spec` for
+  draft 0.2 and `/docs/0.1/spec` for version 0.1, which is frozen. Without a version, such as
+  `/docs/spec`, they redirect to the latest.
 - `/license` and `/license/contributions`: the license and the contribution terms
 - `/kit/company`: the Company implementation kit, not linked from the navigation
 
 Each docs page is also served as Markdown at the same path with `.md`, for example
-`/docs/spec.md`, and `/llms.txt` lists them for AI agents. The kit's two skills are served file by
-file under `/kit/company/` and `/kit/review/`, and as `/kit/implement-personal-agent-protocol.zip` and
-`/kit/poppy-review.zip`. Section links use a fragment, for example `/docs/spec#sessions`. The site
+`/docs/0.2/spec.md`, and `/llms.txt` lists them for AI agents. The kit's skill is served file by file
+under `/kit/company/`, and as `/kit/implement-personal-agent-protocol.zip`. Section links use a fragment, for example `/docs/0.2/spec#sessions`. The site
 also serves `/robots.txt` and `/sitemap.xml`, and unknown paths show a 404 page.
 
 ## Structure
 
 - `app/`: Next.js routes, metadata, and the stylesheet.
 - `components/`: navigation, walkthroughs, code blocks, and review comments.
-- `content/`: the docs pages as MDX, `docs.ts` (the index of docs tabs and pages), the home page,
-  and the walkthrough data.
+- `content/`: the docs pages as MDX, in `versions/<version>/` and `shared/`, `docs.ts` (the index
+  of docs tabs and pages), `versions/versions.json` (the versions), the home page, and the
+  walkthrough data. See [`content/AGENTS.md`](content/AGENTS.md).
 - `lib/`: the MDX pipeline (`mdx.ts`, `mdx-markdown.ts`, `docs-content.ts`), the docs outline, the
   kit generator (`lib/kit/`), syntax highlighting, and analytics.
 - `kit/company/`: the source of the Company implementation kit: the skill's instructions, patterns,
@@ -64,18 +67,20 @@ also serves `/robots.txt` and `/sitemap.xml`, and unknown paths show a 404 page.
 
 ## Editing the docs
 
-See [`AGENTS.md`](AGENTS.md) for how the docs content is written and where each page comes from.
+See [`content/AGENTS.md`](content/AGENTS.md) for how the docs are written, where each page comes
+from, and how a version is published.
 
 ## Hosting
 
 On Vercel, `vercel.json` permanently redirects `personalagentprotocol.ai`,
 `personalagentprotocol.net`, and `personalagentprotocol.com` to `https://personalagentprotocol.org`,
-keeping paths and query strings. It also redirects older page URLs to their current paths and sets
+keeping paths and query strings. It also redirects older page URLs to their current paths, sends docs URLs without a version to the
+latest version (`pnpm docs:sync` writes those redirects), and sets
 security headers on every response: HSTS, `nosniff`, a strict referrer policy, a ban on framing
 the site, and a Content Security Policy that loads everything from the site itself.
 
 Other static hosts need equivalent configuration. `pnpm dev` does not apply Vercel rules. On other
-hosts, a small script on the home page sends old `/?page=spec` links to `/docs/spec`.
+hosts, a small script on the home page sends old `/?page=spec` links to the latest spec.
 
 ## Feedback and contributions
 

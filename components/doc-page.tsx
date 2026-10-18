@@ -3,15 +3,17 @@ import type { MDXComponents } from "mdx/types";
 import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import * as runtime from "react/jsx-runtime";
 import remarkGfm from "remark-gfm";
-import { docsPage, pageSource, tabOutline } from "../lib/docs-content";
-import { escapeHeadingIds, rehypeDocs, remarkHeadingIds } from "../lib/mdx";
+import { counterpart, LATEST, versionOf } from "../content/docs";
+import { docsOutline, docsPage, linkResolver, pageSource, tabOutline } from "../lib/docs-content";
+import { escapeHeadingIds, rehypeDocs, remarkHeadingIds, remarkVersionLinks } from "../lib/mdx";
 import { NEW_ISSUE_URL } from "../lib/site";
 import { CodeBlock } from "./code-block";
 import { CopyMarkdownButton } from "./copy-markdown-button";
 import { DocsNav } from "./docs-nav";
-import { CommentingButton, DownloadKitButton } from "./feedback-actions";
+import { CommentingButton } from "./feedback-actions";
 import { PronounceButton } from "./pronounce-button";
 import { SpecTable } from "./spec-table";
+import { VersionMenu } from "./version-menu";
 
 // A list of partner names, shown in columns.
 function PartnerList({ children }: { children?: ReactNode }) {
@@ -33,12 +35,33 @@ function IssueLink({ cta, children }: { cta: string; children?: ReactNode }) {
     );
 }
 
+// On a page of an earlier version, says so and links to the same page in the latest.
+function VersionBanner({ href }: { href: string }) {
+    const version = versionOf(href);
+    if (!version || version === LATEST) {
+        return null;
+    }
+    return (
+        <p className="version-banner" role="note">
+            You're reading version {version.id}, published {version.published}. The latest is{" "}
+            {LATEST.label.toLowerCase()}
+            {LATEST.draft ? ", which is still in progress" : ""}.{" "}
+            <a href={counterpart(href, LATEST)} data-cta="version_banner_latest">
+                See this page in {LATEST.label.toLowerCase()}
+            </a>{" "}
+            ·{" "}
+            <a href="/docs/changelog" data-cta="version_banner_changelog">
+                Changelog
+            </a>
+        </p>
+    );
+}
+
 // The components content files can use, and the ones Markdown maps to.
 const COMPONENTS: MDXComponents = {
     table: SpecTable,
     CodeBlock,
     CommentingButton,
-    DownloadKitButton,
     IssueLink,
     PartnerList,
     PronounceButton,
@@ -49,7 +72,7 @@ export async function DocPage({ href }: { href: string }) {
     const page = docsPage(href);
     const { default: Content } = await evaluate(escapeHeadingIds(pageSource(page).source), {
         ...runtime,
-        remarkPlugins: [remarkGfm, remarkHeadingIds],
+        remarkPlugins: [remarkGfm, remarkHeadingIds, remarkVersionLinks(linkResolver(page))],
         rehypePlugins: [rehypeDocs],
     });
     const components: MDXComponents = {
@@ -63,8 +86,13 @@ export async function DocPage({ href }: { href: string }) {
     };
     return (
         <div className="docs-layout">
-            <DocsNav current={href} pages={tabOutline(href)} />
+            <DocsNav
+                current={href}
+                pages={tabOutline(href)}
+                version={<VersionMenu current={href} outline={docsOutline()} inline />}
+            />
             <article className="doc" id="article">
+                <VersionBanner href={href} />
                 <Content components={components} />
             </article>
         </div>

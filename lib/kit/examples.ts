@@ -1,4 +1,5 @@
 import { validateSchema } from "../../kit/company/validate/schema.ts";
+import { SPEC_HREF } from "../../content/docs";
 import { docsPage } from "../docs-content";
 import { jsonExamples } from "./docs";
 
@@ -54,7 +55,7 @@ const EXAMPLES: Record<string, Target> = {
 export function checkSpecExamples(schemas: Record<string, object>): string[] {
     const problems: string[] = [];
     const seen = new Set<string>();
-    for (const example of jsonExamples(docsPage("/docs/spec"))) {
+    for (const example of jsonExamples(docsPage(SPEC_HREF))) {
         seen.add(example.key);
         if (!(example.key in EXAMPLES)) {
             problems.push(

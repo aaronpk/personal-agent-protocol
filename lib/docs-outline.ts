@@ -1,4 +1,4 @@
-import { DOCS_PAGES } from "../content/docs";
+import { ALL_DOCS_PAGES } from "../content/docs";
 
 // The outline of the docs pages, shown in the left navigation and used by comments and analytics.
 // It's built on the server from each page's headings (lib/docs-content.ts) and passed to the
@@ -25,4 +25,5 @@ export function markdownFileName(href: string): string {
     return href.replace(/^\/docs\//, "").replace(/\//g, "-") + ".md";
 }
 
-export const PAGE_HREFS = ["/", ...DOCS_PAGES.map((p) => p.href)];
+// Every page comments can be on: the home page and the docs pages of every version.
+export const PAGE_HREFS = ["/", ...ALL_DOCS_PAGES.map((p) => p.href)];

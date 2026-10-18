@@ -1,6 +1,6 @@
 # Path to 1.0
 
-The [specification](https://personalagentprotocol.org/docs/spec) is a draft. Before 1.0, we want to learn what works and what doesn't by implementing it, and refine the spec based on what we learn.
+The [specification](https://personalagentprotocol.org/docs/0.2/spec) is a draft. Before 1.0, we want to learn what works and what doesn't by implementing it, and refine the spec based on what we learn.
 
 ## How we get there
 
@@ -25,7 +25,7 @@ Two tools can help you write it:
 
 **Use the site's inline comments.** You can comment on any text on this site, then export your comments to share them. Enable site commenting, then select text to comment on it. To export, use the … button next to Comments, and paste or attach the export in your issue.
 
-**Review with an agent.** If you'd like an agent to review the docs and write feedback, give it the review kit. It's a skill with all the docs and instructions for writing feedback in a form we can easily use. Download it below, with any comments you've left, or install the `poppy-review` skill the same way as the [Company implementation kit](https://personalagentprotocol.org/kit/company#install). Paste the agent's review into your issue.
+**Review with an agent.** If you'd like an agent to review the docs, give it the [implementation kit](https://personalagentprotocol.org/kit/company), which includes all the docs. Paste the agent's review into your issue.
 
 ## Open topics
 

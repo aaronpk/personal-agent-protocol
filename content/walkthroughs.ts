@@ -1,4 +1,5 @@
 import type { Walkthrough } from "../lib/walkthrough-types";
+import { LATEST } from "./docs";
 
 // Companies, identifiers, API schemas, and tool payloads in these examples are fictional. Domains
 // use the reserved .example top-level domain (RFC 6761).
@@ -76,7 +77,7 @@ export const walkthroughs: Walkthrough[] = [
                 company: {
                     co: MANZANITA,
                     rows: [
-                        ["Publishes", "poppy.json, version 0.1"],
+                        ["Publishes", `poppy.json, version ${LATEST.id}`],
                         ["Returns", "Handled by its company agent"],
                         ["Sign-in", "On Manzanita's own page"],
                     ],
@@ -91,7 +92,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "protocol_version": "0.1",
+  "protocol_version": "${LATEST.id}",
   "organization": {
     "name": "Manzanita Supply",
     "domain": "manzanitasupply.example"
@@ -559,7 +560,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "protocol_version": "0.1",
+  "protocol_version": "${LATEST.id}",
   "organization": { "name": "Laurel Fiber", "domain": "laurelfiber.example" },
   "auth": {
     "issuer": "https://auth.laurelfiber.example",

@@ -52,6 +52,51 @@
             "permanent": false
         },
         {
+            "source": "/docs/:version(\\d+\\.\\d+)",
+            "destination": "/docs/:version/spec",
+            "permanent": false
+        },
+        {
+            "source": "/docs/spec",
+            "destination": "/docs/0.2/spec",
+            "permanent": false
+        },
+        {
+            "source": "/docs/spec.md",
+            "destination": "/docs/0.2/spec.md",
+            "permanent": false
+        },
+        {
+            "source": "/docs/extensions",
+            "destination": "/docs/0.2/extensions",
+            "permanent": false
+        },
+        {
+            "source": "/docs/extensions.md",
+            "destination": "/docs/0.2/extensions.md",
+            "permanent": false
+        },
+        {
+            "source": "/docs/extensions/operations",
+            "destination": "/docs/0.2/extensions/operations",
+            "permanent": false
+        },
+        {
+            "source": "/docs/extensions/operations.md",
+            "destination": "/docs/0.2/extensions/operations.md",
+            "permanent": false
+        },
+        {
+            "source": "/docs/guides",
+            "destination": "/docs/0.2/guides",
+            "permanent": false
+        },
+        {
+            "source": "/docs/guides.md",
+            "destination": "/docs/0.2/guides.md",
+            "permanent": false
+        },
+        {
             "source": "/:page(spec|guides|extensions)",
             "destination": "/docs/:page",
             "permanent": true
@@ -98,12 +143,22 @@
         },
         {
             "source": "/docs/personal-agent-protocol-docs.zip",
-            "destination": "/kit/poppy-review.zip",
+            "destination": "/kit/implement-personal-agent-protocol.zip",
             "permanent": true
         },
         {
-            "source": "/docs/review-kit.json",
-            "destination": "/kit/poppy-review.json",
+            "source": "/kit/poppy-review.zip",
+            "destination": "/kit/implement-personal-agent-protocol.zip",
+            "permanent": true
+        },
+        {
+            "source": "/kit/review",
+            "destination": "/kit/company",
+            "permanent": true
+        },
+        {
+            "source": "/kit/review/:path*",
+            "destination": "/kit/company/:path*",
             "permanent": true
         },
         {
@@ -113,6 +168,15 @@
         }
     ],
     "headers": [
+        {
+            "source": "/docs/0.1/(.*)",
+            "headers": [
+                {
+                    "key": "X-Robots-Tag",
+                    "value": "noindex"
+                }
+            ]
+        },
         {
             "source": "/(.*)",
             "headers": [

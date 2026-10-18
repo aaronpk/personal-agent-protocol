@@ -1,12 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { DOCS_TABS, tabFor } from "../content/docs";
+import { docsTabsFor, tabFor, type DocsVersion } from "../content/docs";
+import { useDocsVersion } from "./docs-version";
+import type { OutlinePage } from "../lib/docs-outline";
 import { REPO_URL } from "../lib/site";
 import { ButtonLink } from "./button";
-import { DocStatus } from "./doc-status";
+import { VersionMenu } from "./version-menu";
 
-type Tab = { title: string; href: string };
+type Tab = { title: string; href: string; versioned?: boolean };
 
 const LICENSE_TABS: Tab[] = [
     { title: "License", href: "/license" },
@@ -14,11 +16,14 @@ const LICENSE_TABS: Tab[] = [
 ];
 
 // The tab row for the current page, if it has one: the docs tabs on docs pages and the license
-// tabs on license pages.
-function tabsFor(pathname: string): { label: string; tabs: Tab[]; current: Tab } | undefined {
+// tabs on license pages. `version` is the docs version the page shows.
+function tabsFor(
+    pathname: string,
+    version: DocsVersion,
+): { label: string; tabs: Tab[]; current: Tab } | undefined {
     const docsTab = tabFor(pathname);
     if (docsTab) {
-        return { label: "Documentation", tabs: DOCS_TABS, current: docsTab };
+        return { label: "Documentation", tabs: docsTabsFor(version), current: docsTab };
     }
     const path = pathname.replace(/\/$/, "") || "/";
     const licenseTab = LICENSE_TABS.find((tab) => tab.href === path);
@@ -26,6 +31,33 @@ function tabsFor(pathname: string): { label: string; tabs: Tab[]; current: Tab }
         return { label: "License", tabs: LICENSE_TABS, current: licenseTab };
     }
     return undefined;
+}
+
+// Runs of tabs that are all versioned or all not, in order.
+function groups(tabs: Tab[]): { versioned: boolean; tabs: Tab[] }[] {
+    const runs: { versioned: boolean; tabs: Tab[] }[] = [];
+    for (const tab of tabs) {
+        const versioned = Boolean(tab.versioned);
+        const last = runs.at(-1);
+        if (last?.versioned === versioned) {
+            last.tabs.push(tab);
+        } else {
+            runs.push({ versioned, tabs: [tab] });
+        }
+    }
+    return runs;
+}
+
+function TabLink({ tab, current }: { tab: Tab; current: Tab }) {
+    return (
+        <a
+            href={tab.href}
+            className={tab === current ? "active" : undefined}
+            aria-current={tab === current ? "page" : undefined}
+        >
+            {tab.title}
+        </a>
+    );
 }
 
 // The GitHub mark, which lucide-react doesn't include.
@@ -38,12 +70,13 @@ function GitHubIcon({ size }: { size: number }) {
 }
 
 // Pages with tabs show them under the header instead of the home page's section links. Docs pages
-// also show the draft status and, except on phones, a link to the repository. The kit pages, laid
+// also show the version menu next to the site name and a link to the repository. On phones, the
+// docs tabs and the version menu are in the outline menu instead. `outline` is the outline of every docs page. The kit pages, laid
 // out like docs pages without tabs, show a link to the docs and the repository link.
-export function SiteHeader() {
+export function SiteHeader({ outline }: { outline: OutlinePage[] }) {
     const pathname = usePathname() ?? "/";
     const currentTab = tabFor(pathname);
-    const tabRow = tabsFor(pathname);
+    const tabRow = tabsFor(pathname, useDocsVersion(pathname));
     // The section links only make sense on the home page, so other pages without tabs, such as the
     // 404 page, show just the site name.
     const home = pathname.replace(/\/$/, "") === "";
@@ -60,7 +93,7 @@ export function SiteHeader() {
                         <img src="/logo.png" alt="" width={40} height={40} />
                         Personal Agent Protocol
                     </a>
-                    {currentTab ? <DocStatus /> : null}
+                    {currentTab ? <VersionMenu current={pathname} outline={outline} /> : null}
                 </div>
                 {tabRow ? null : home ? (
                     <>
@@ -107,18 +140,28 @@ export function SiteHeader() {
                 ) : null}
             </div>
             {tabRow ? (
-                <nav className="docs-tabs" aria-label={tabRow.label}>
+                <nav
+                    className={`docs-tabs${currentTab ? " docs-tabs-docs" : ""}`}
+                    aria-label={tabRow.label}
+                >
                     <div className="wrap">
-                        {tabRow.tabs.map((tab) => (
-                            <a
-                                key={tab.href}
-                                href={tab.href}
-                                className={tab === tabRow.current ? "active" : undefined}
-                                aria-current={tab === tabRow.current ? "page" : undefined}
-                            >
-                                {tab.title}
-                            </a>
-                        ))}
+                        {groups(tabRow.tabs).map((group) =>
+                            group.versioned ? (
+                                <div className="docs-tabs-versioned" key={group.tabs[0].href}>
+                                    {group.tabs.map((tab) => (
+                                        <TabLink
+                                            key={tab.href}
+                                            tab={tab}
+                                            current={tabRow.current}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                group.tabs.map((tab) => (
+                                    <TabLink key={tab.href} tab={tab} current={tabRow.current} />
+                                ))
+                            ),
+                        )}
                     </div>
                 </nav>
             ) : null}

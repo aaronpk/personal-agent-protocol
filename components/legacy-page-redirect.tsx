@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { SPEC_HREF } from "../content/docs";
 
 const LEGACY_PAGES: Record<string, string> = {
-    spec: "/docs/spec",
+    spec: SPEC_HREF,
 };
 
 // Sends old `/?page=...` links to their page on hosts without the vercel.json redirects.

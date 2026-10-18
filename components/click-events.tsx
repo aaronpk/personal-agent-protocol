@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import { trackEvent } from "../lib/analytics";
+import { SPEC_HREF as SPEC } from "../content/docs";
 import { PAGE_HREFS } from "../lib/docs-outline";
 
-const SPEC = "/docs/spec";
 // The values a link's `data-cta` attribute may hold, and the places a call to action may sit.
 const CTAS = new Set(["see_examples", "docs", "spec", "roadmap", "feedback_issue", "github"]);
 const CTA_LOCATIONS = new Set(["hero", "implement"]);

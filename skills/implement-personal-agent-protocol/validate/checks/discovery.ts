@@ -1,5 +1,6 @@
 // Milestone 1: poppy.json (spec section 3) and the issuer's OAuth server metadata (3.2).
 
+import { PROTOCOL_VERSION } from "../catalog.ts";
 import { getFollowing, isJsonContentType, type Exchange } from "../http.ts";
 import { formatSchemaErrors } from "../schema.ts";
 import { check } from "../schemas.ts";
@@ -198,15 +199,22 @@ export function checkPoppyDocument(
         r.fail("discovery.protocol-version", {
             exchange: ex,
             got: `protocol_version is ${JSON.stringify(version)}`,
-            expected: 'A string "major.minor", such as "0.1"',
-            cause: 'Set protocol_version to "0.1", the draft this validator checks.',
+            expected: `A string "major.minor", such as "${PROTOCOL_VERSION}"`,
+            cause: `Set protocol_version to "${PROTOCOL_VERSION}", the draft this validator checks.`,
         });
-    } else if (match[1] !== "0") {
+    } else if (match[1] !== PROTOCOL_VERSION.split(".")[0]) {
         r.fail("discovery.protocol-version", {
             exchange: ex,
             got: `protocol_version ${version}`,
-            expected: "Major version 0 (this draft is 0.1)",
-            cause: "Personal Agents that support only draft 0.x won't use this document. Use 0.1 unless you're implementing a later major version on purpose.",
+            expected: `Major version 0 (this draft is ${PROTOCOL_VERSION})`,
+            cause: `Personal Agents that support only draft 0.x won't use this document. Use ${PROTOCOL_VERSION} unless you're implementing a later major version on purpose.`,
+        });
+    } else if (Number(match[2]) < Number(PROTOCOL_VERSION.split(".")[1])) {
+        r.warn("discovery.protocol-version", {
+            exchange: ex,
+            got: `protocol_version ${version}`,
+            expected: `protocol_version ${PROTOCOL_VERSION}`,
+            cause: `This validator checks draft ${PROTOCOL_VERSION}, and some checks may not apply to an implementation of ${version}. Set protocol_version to "${PROTOCOL_VERSION}" once the implementation follows draft ${PROTOCOL_VERSION}. See https://personalagentprotocol.org/docs/changelog for what changed.`,
         });
     } else {
         r.pass("discovery.protocol-version", { summary: `protocol_version ${version}.` });

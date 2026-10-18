@@ -9,9 +9,9 @@ Personal Agent Protocol (Poppy for short) defines how a Personal Agent, acting f
 3. **Web browsing:** how the Personal Agent browses the Company's website in the same Session.
 4. **APIs:** how the Personal Agent uses the Company's APIs, which can be more efficient than web browsing.
 5. **Conversations:** how the Personal Agent starts a conversation with the Company Agent, and how either side can bring in a person: the User on the Personal Agent's side, or a person at the Company.
-6. **Extensions:** how Companies and Personal Agents add capabilities beyond this specification, described on the [Extensions page](https://personalagentprotocol.org/docs/extensions).
+6. **Extensions:** how Companies and Personal Agents add capabilities beyond this specification, described on the [Extensions page](https://personalagentprotocol.org/docs/0.2/extensions).
 
-This is draft version 0.1. Any part of it can change before a stable version, including in ways that aren't backward compatible. Areas it doesn't cover yet are listed in [Path to 1.0](https://personalagentprotocol.org/docs/path-to-1#open-topics).
+This is draft version 0.2. Any part of it can change before a stable version, including in ways that aren't backward compatible. Areas it doesn't cover yet are listed in [Path to 1.0](https://personalagentprotocol.org/docs/path-to-1#open-topics).
 
 The examples use `example.com` for the Company and `agent.example` for the Personal Agent. Tokens, keys, and codes in the examples are shortened placeholders, not real values.
 
@@ -53,7 +53,7 @@ An example document:
 
 ```
 {
-  "protocol_version": "0.1",
+  "protocol_version": "0.2",
   "organization": {
     "name": "Example Company",
     "domain": "example.com"
@@ -108,7 +108,7 @@ An example document:
 
 | Field | Req. | Description |
 | --- | --- | --- |
-| `protocol_version` | Yes | The protocol version the document follows, as `major.minor`. This draft is `0.1`. A newer minor version doesn't break older Personal Agents, which use the document and ignore fields they don't recognize. A Personal Agent MUST NOT use a document whose major version it doesn't support. |
+| `protocol_version` | Yes | The protocol version the document follows, as `major.minor`. This draft is `0.2`. A newer minor version doesn't break older Personal Agents, which use the document and ignore fields they don't recognize. A Personal Agent MUST NOT use a document whose major version it doesn't support. |
 | `organization` | Yes | Display name and domain. `domain` MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, and nothing else. |
 | `auth` | If `agent`, `apis`, or `web.browser_session_endpoint` is present | `issuer` is the Company's OAuth issuer identifier, an HTTPS URL. It identifies the Company, and the Personal Agent finds the Company's OAuth endpoints from it (3.2). It also contains `direct`, `device`, and `mediated` for the types of sign-in the Company supports (4.4), if any. With none, it offers only signed-out Sessions. Sessions need `auth`, so a Company without it can only be browsed as an ordinary website (section 5). |
 | `auth.direct` | If supported | `scopes` lists the scopes Direct Sign-In can grant (4.5). |
@@ -153,7 +153,7 @@ The metadata MAY have other fields, which Personal Agents ignore. Personal Agent
 
 ### 3.3 Extensions
 
-Extensions add optional features on top of this protocol, such as [operations](https://personalagentprotocol.org/docs/extensions/operations). A Company lists the ones it supports in `extensions`:
+Extensions add optional features on top of this protocol, such as [operations](https://personalagentprotocol.org/docs/0.2/extensions/operations). A Company lists the ones it supports in `extensions`:
 
 *Excerpt from poppy.json*
 
@@ -990,7 +990,7 @@ Any message can carry `context`, and fields it leaves out keep their previous va
 }
 ```
 
-Company messages have `id`, `role`, `sender`, `text`, and `data`, with an ID the Company chooses. Only the Personal Agent sends `context`. Extensions can add fields, such as `operation` in the [Operations extension](https://personalagentprotocol.org/docs/extensions/operations#binding-conversations).
+Company messages have `id`, `role`, `sender`, `text`, and `data`, with an ID the Company chooses. Only the Personal Agent sends `context`. Extensions can add fields, such as `operation` in the [Operations extension](https://personalagentprotocol.org/docs/0.2/extensions/operations#binding-conversations).
 
 ### 7.5 Reading events
 
@@ -1262,11 +1262,11 @@ A Personal Agent passes what a Company returns to its model: conversation messag
 - Personal Agents MUST treat content from a Company as data, not as instructions. Only the User decides what the Personal Agent does.
 - A Personal Agent MUST NOT act at one Company, or send it information, because content from another Company asked it to. It acts at a Company only when the User's task needs it.
 - A Personal Agent SHOULD send a Company only information relevant to the User's task. That includes context that helps the Company handle it, such as the reason for a return or a deadline the User has. It doesn't include unrelated details from the User's context or from other Companies.
-- Text from a Company is never the User's approval or consent. The Operations extension states this for approving an operation ([Operations 5.1](https://personalagentprotocol.org/docs/extensions/operations#approval)).
+- Text from a Company is never the User's approval or consent. The Operations extension states this for approving an operation ([Operations 5.1](https://personalagentprotocol.org/docs/0.2/extensions/operations#approval)).
 
 ### 8.2 Secrets and the model
 
-A model can be led to repeat what is in its context, so a secret in context can leak through any message the Personal Agent sends. Account Tokens MUST NOT go in model context (4.8). Credentials from Mediated Sign-In are never shown back or sent anywhere except the Company, and once a sign-in ends they are discarded or kept only in a credential store the User chose (4.7). Personal Agents SHOULD keep every other secret out of model context too, including Session Tokens, private keys, device codes, and one-time codes, and sign and send requests in code the model can't read. The [guides](https://personalagentprotocol.org/docs/guides#both-secrets) list these secrets and how to handle them.
+A model can be led to repeat what is in its context, so a secret in context can leak through any message the Personal Agent sends. Account Tokens MUST NOT go in model context (4.8). Credentials from Mediated Sign-In are never shown back or sent anywhere except the Company, and once a sign-in ends they are discarded or kept only in a credential store the User chose (4.7). Personal Agents SHOULD keep every other secret out of model context too, including Session Tokens, private keys, device codes, and one-time codes, and sign and send requests in code the model can't read. The [guides](https://personalagentprotocol.org/docs/0.2/guides#both-secrets) list these secrets and how to handle them.
 
 ### 8.3 What a domain vouches for
 

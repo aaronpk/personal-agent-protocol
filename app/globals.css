@@ -192,29 +192,129 @@ code {
     text-decoration: none;
 }
 
-.doc-status {
+/* The docs version menu: a button that lists every version. */
+.version-menu {
+    position: relative;
+}
+
+/* Next to the site name. */
+.brand .version-menu {
     display: flex;
     align-items: center;
-    gap: 12px;
+    letter-spacing: normal;
+}
+
+/* A quiet button, with a background on hover. */
+.version-button {
+    display: inline-flex;
+    font-weight: 500;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 6px 3px 8px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--ink-2);
     font-size: 13px;
+    font-family: inherit;
+    line-height: inherit;
+    cursor: pointer;
+}
+
+.version-button:hover,
+.version-button[aria-expanded="true"] {
+    background: var(--bg-soft);
+}
+
+.version-list {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 60;
+    min-width: 220px;
+    padding: 6px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.version-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.version-list a {
+    display: block;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+}
+
+.version-list a:hover {
+    background: var(--bg-soft);
+    text-decoration: none;
+}
+
+.version-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.version-note {
+    display: block;
     color: var(--ink-3);
-    white-space: nowrap;
 }
 
-.draft-badge {
-    padding: 2px 8px;
-    border-radius: 999px;
+.version-list .version-changes {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    color: var(--accent);
+}
+
+/* On a page of an earlier draft, above the title. */
+.version-banner {
+    margin: 0 0 24px;
+    padding: 10px 14px;
     background: var(--amber-soft);
-    color: #9c4f00;
-    font-size: 12px;
-    font-weight: 600;
+    border-radius: var(--radius);
+    color: var(--ink-2);
+    font-size: 14px;
 }
 
-/* Centered on the site name's mostly lowercase text, which sits a little below its line box's
-   middle. */
-.brand .draft-badge {
-    position: relative;
-    top: 1px;
+/* The site name's weight doesn't carry into the list. */
+.version-list {
+    font-weight: 400;
+}
+
+/* The list opened in place, in the outline menu on phones. */
+.version-list-inline {
+    position: static;
+    min-width: 0;
+    margin-top: 6px;
+    box-shadow: none;
+}
+
+/* The breadcrumb's tab button and the menu it opens, on phones only. */
+.toc-crumb,
+.toc-crumb-sep,
+.toc-crumb-chevron,
+.toc-tabs-menu {
+    display: none;
+}
+
+.toc .version-list li a {
+    padding: 6px 10px;
+    border-left: 0;
+    color: var(--ink);
 }
 
 .nav {
@@ -275,6 +375,22 @@ code {
 /* Inside the ring so the scrolling row doesn't clip it. */
 .docs-tabs a:focus-visible {
     outline-offset: -2px;
+}
+
+/* The tabs whose pages each draft keeps a copy of, after a divider. */
+.docs-tabs-versioned {
+    display: flex;
+    align-items: stretch;
+    /* The same spacing as the rest of the row, which is narrower on smaller screens. */
+    gap: inherit;
+}
+
+.docs-tabs-versioned::before {
+    content: "";
+    align-self: center;
+    width: 1px;
+    height: 20px;
+    background: var(--line);
 }
 
 /* Color only, not weight, so the tabs don't change width. */
@@ -1744,7 +1860,6 @@ footer.site-footer .footer-github {
         padding-inline: 20px;
     }
 
-    .site-header .doc-status,
     .site-header > .wrap > .btn {
         flex-shrink: 0;
     }
@@ -1886,11 +2001,11 @@ footer.site-footer .footer-github {
         outline-offset: -2px;
     }
 
-    .toc nav {
+    .toc > nav {
         display: none;
     }
 
-    .toc.toc-open nav {
+    .toc.toc-open > nav {
         display: block;
         position: absolute;
         top: 100%;
@@ -1976,13 +2091,110 @@ footer.site-footer .footer-github {
     }
 
     .toc-toggle,
-    .toc.toc-open nav {
+    .toc.toc-open > nav {
         padding-inline: 20px;
     }
 
-    /* The site name needs the room. */
-    .site-header .doc-status {
+    /* The docs tabs and the version menu don't fit, so they move to the outline bar's breadcrumb. */
+    .brand .version-menu,
+    .docs-tabs-docs {
         display: none;
+    }
+
+    html:has(.docs-tabs-docs) {
+        --chrome-height: 65px;
+    }
+
+    /* The outline bar becomes a breadcrumb: the tab, then the section. */
+    .toc-bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding-inline: 20px;
+    }
+
+    .toc-bar .toc-toggle {
+        flex: 1;
+        min-width: 0;
+        gap: 4px;
+        padding-inline: 0;
+    }
+
+    .toc-toggle-icon {
+        display: none;
+    }
+
+    .toc-crumb {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+        min-height: 44px;
+        padding: 0;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ink-3);
+        background: none;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .toc-crumb-sep {
+        display: block;
+        flex-shrink: 0;
+        color: var(--ink-3);
+    }
+
+    .toc-crumb-chevron {
+        display: block;
+        color: var(--ink-3);
+    }
+
+    .toc-crumb:focus-visible {
+        outline-offset: -2px;
+    }
+
+    /* The tab's menu: the version, then the tabs. */
+    .toc.toc-tabs-open .toc-tabs-menu {
+        display: block;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        padding: 12px 20px 8px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--line);
+        box-shadow: var(--shadow);
+    }
+
+    .toc-version {
+        margin: 0 -8px 8px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .toc-tabs-menu nav a {
+        display: block;
+        padding: 8px 0;
+        font-size: 14px;
+        color: var(--ink);
+    }
+
+    .toc-tabs-menu nav a:hover {
+        text-decoration: none;
+        color: var(--accent);
+    }
+
+    .toc-tabs-menu nav a.current {
+        color: var(--accent);
+        font-weight: 500;
+    }
+
+    .toc-tabs-menu nav a:not(.versioned) + a.versioned {
+        margin-top: 4px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
     }
 
     .doc {

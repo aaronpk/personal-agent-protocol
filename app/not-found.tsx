@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "../components/button";
+import { SPEC_HREF } from "../content/docs";
 
 export const metadata: Metadata = {
     title: "Page not found | Personal Agent Protocol",
@@ -17,7 +18,7 @@ export default function NotFound() {
                         <ButtonLink variant="primary" href="/">
                             Go to the home page
                         </ButtonLink>
-                        <ButtonLink variant="secondary" href="/docs/spec">
+                        <ButtonLink variant="secondary" href={SPEC_HREF}>
                             Read the specification
                         </ButtonLink>
                     </div>

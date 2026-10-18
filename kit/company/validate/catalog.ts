@@ -2,6 +2,10 @@
 // the site build imports this to check that each `section` is a heading id on its page and each
 // `quote` appears word for word in that page's text.
 
+// The version of the spec this validator checks: the latest. The site build fails when it isn't,
+// and `pnpm docs:draft` changes it.
+export const PROTOCOL_VERSION = "0.2";
+
 export type Milestone = "foundation" | "interfaces" | "sign-in" | "extensions";
 
 export type CheckInfo = {

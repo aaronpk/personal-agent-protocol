@@ -1,21 +1,19 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { DOCS_PAGES } from "../../content/docs";
+import { DOCS_PAGES, LATEST, resolveDocsLink } from "../../content/docs";
 import { pageMarkdown } from "../docs-content";
 import { REPO_URL, SITE_NAME, SITE_URL } from "../site";
 import { checklistMarkdown } from "./checklist";
 import { pageName } from "./docs";
-import { reviewSkillMarkdown } from "./review";
 
-// The kit's two skills, as files: implement-personal-agent-protocol, for a Company implementing the protocol, and
-// poppy-review, for reviewing the docs. Each is a folder with a SKILL.md. `pnpm kit` writes them to
+// The kit's skill, as files: implement-personal-agent-protocol, for a Company implementing the
+// protocol. It's a folder with a SKILL.md. `pnpm kit` writes them to
 // skills/, where agents install them from the repository, and the site serves the same files.
 
 export type KitFile = { path: string; content: string };
 
 export const SKILLS = {
     company: { name: "implement-personal-agent-protocol", source: "kit/company" },
-    review: { name: "poppy-review" },
 } as const;
 
 export type SkillId = keyof typeof SKILLS;
@@ -24,18 +22,6 @@ const ROOT = process.cwd();
 
 // Kit sources that stay in the repository: the validator's tests.
 const NOT_SHIPPED = ["validate/test/"];
-
-// The protocol version the docs describe, such as "0.1", from the spec's introduction.
-export function protocolVersion(): string {
-    const markdown = pageMarkdown("/docs/spec");
-    const match = /This is draft version (\d+(?:\.\d+)*)\./.exec(markdown);
-    if (!match) {
-        throw new Error(
-            'spec.mdx: the kit needs "This is draft version <n>." to find the version.',
-        );
-    }
-    return match[1];
-}
 
 function filesUnder(dir: string): string[] {
     return readdirSync(dir)
@@ -54,32 +40,37 @@ function referenceFiles(): KitFile[] {
     }));
 }
 
+// Links to the docs in the kit's sources, such as /docs/spec#fields, point at the version the kit
+// follows, the latest, as links in the docs do.
+function pinDocsLinks(text: string): string {
+    const site = SITE_URL.replace(/[.]/g, "\\.");
+    return text.replace(
+        new RegExp(`${site}(/docs/[a-z0-9/.-]*[a-z0-9])`, "g"),
+        (_, path: string) => SITE_URL + resolveDocsLink(path),
+    );
+}
+
 function companySkill(): KitFile[] {
     const source = join(ROOT, SKILLS.company.source);
     const files = filesUnder(source)
-        .map((path) => ({ path: relative(source, path), content: readFileSync(path, "utf8") }))
+        .map((path) => ({
+            path: relative(source, path),
+            content: pinDocsLinks(readFileSync(path, "utf8")),
+        }))
         .filter((file) => !NOT_SHIPPED.some((prefix) => file.path.startsWith(prefix)));
     return [
         ...files,
-        { path: "checklist.md", content: checklistMarkdown(protocolVersion()) },
-        ...referenceFiles(),
-    ];
-}
-
-function reviewSkill(): KitFile[] {
-    return [
-        { path: "SKILL.md", content: reviewSkillMarkdown(protocolVersion()) },
+        { path: "checklist.md", content: checklistMarkdown(LATEST.label.toLowerCase()) },
         ...referenceFiles(),
     ];
 }
 
 // A skill's files, with paths inside its folder.
 export function skillFiles(id: SkillId): KitFile[] {
-    const files = id === "company" ? companySkill() : reviewSkill();
-    return files.sort((a, b) => a.path.localeCompare(b.path));
+    return companySkill().sort((a, b) => a.path.localeCompare(b.path));
 }
 
-// The Claude Code plugin marketplace: one plugin holding both skills.
+// The Claude Code plugin marketplace: one plugin holding the skill.
 function marketplace(): string {
     const skills = Object.values(SKILLS).map((skill) => `./skills/${skill.name}`);
     return (
@@ -88,13 +79,13 @@ function marketplace(): string {
                 name: "personal-agent-protocol",
                 owner: { name: SITE_NAME },
                 metadata: {
-                    description: `Skills for implementing and reviewing ${SITE_NAME} (Poppy).`,
-                    version: protocolVersion(),
+                    description: `Skills for implementing ${SITE_NAME} (Poppy).`,
+                    version: LATEST.id,
                 },
                 plugins: [
                     {
                         name: "personal-agent-protocol",
-                        description: `Implement ${SITE_NAME} (Poppy) for a Company, with a validator, or review the docs.`,
+                        description: `Implement ${SITE_NAME} (Poppy) for a Company, with a validator.`,
                         source: "./",
                         strict: false,
                         homepage: `${SITE_URL}/kit/company`,

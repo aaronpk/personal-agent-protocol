@@ -1,5 +1,5 @@
 import type { Nodes } from "mdast";
-import type { DocsPage } from "../../content/docs";
+import { docsHref, type DocsPage } from "../../content/docs";
 import { docsPage, pageSource } from "../docs-content";
 import { headingId, textOf } from "../mdx";
 import { SITE_URL } from "../site";
@@ -237,7 +237,7 @@ type Recommendation = { section: string; milestone: Milestone; lines: string[] }
 // The guides' recommendations for companies, by section: each list item becomes a checkbox, after
 // the paragraph that introduces the list.
 function recommendations(): Recommendation[] {
-    const page = docsPage("/docs/guides");
+    const page = docsPage(docsHref("guides")!);
     const out: Recommendation[] = [];
     let section: string | undefined;
     let intro: string | undefined;
@@ -277,17 +277,17 @@ function link(page: string, section: string, label: string): string {
 }
 
 // The checklist as Markdown.
-export function checklistMarkdown(protocolVersion: string): string {
-    const pages = ["/docs/spec", "/docs/extensions/operations"].map(docsPage);
+export function checklistMarkdown(version: string): string {
+    const pages = ["spec", "extensions/operations"].map((slug) => docsPage(docsHref(slug)!));
     const all = pages.flatMap(requirements).filter((r) => r.party !== "agent");
     const recommended = recommendations();
     const titles = new Map(pages.map((page) => [pageName(page), headings(page)]));
-    titles.set("guides", headings(docsPage("/docs/guides")));
+    titles.set("guides", headings(docsPage(docsHref("guides")!)));
 
     const lines = [
         "# Company checklist",
         "",
-        `Generated from the Personal Agent Protocol docs, draft ${protocolVersion}. It lists every`,
+        `Generated from the Personal Agent Protocol docs, ${version}. It lists every`,
         "requirement on the Company in the specification and the Operations extension, and the guides'",
         "recommendations for companies, grouped by milestone. Go through the sections for the",
         "milestones and features in your design. The validator checks some of these. The rest need a",

@@ -3,22 +3,15 @@ import { zip } from "../zip";
 import { checkKit } from "./checks";
 import { SKILLS, skillFiles, type KitFile, type SkillId } from "./files";
 
-// The site's copy of each skill: its files one by one, under /kit/<company or review>/, and as a
-// zip holding the skill's folder, which Claude apps take as an upload. Every route checks the kit
-// first, so the build fails if it's stale or broken.
-
-// A skill zip's files, for the browser to add the reader's comments to before zipping.
-export type SkillKit = {
-    updated: string;
-    files: KitFile[];
-    commentsPath: string;
-};
+// The site's copy of the skill: its files one by one, under /kit/company/, and as a zip holding
+// the skill's folder, which Claude apps take as an upload. Every route checks the kit first, so the
+// build fails if it's stale or broken.
 
 function updated(): string {
     return process.env.NEXT_PUBLIC_DOCS_UPDATED ?? new Date().toISOString();
 }
 
-export function skillKit(id: SkillId): SkillKit {
+function skillKit(id: SkillId): { updated: string; files: KitFile[] } {
     checkKit();
     const folder = `${SKILLS[id].name}/`;
     return {
@@ -27,7 +20,6 @@ export function skillKit(id: SkillId): SkillKit {
             { path: folder, content: "" },
             ...skillFiles(id).map((file) => ({ path: folder + file.path, content: file.content })),
         ],
-        commentsPath: `${folder}comments.md`,
     };
 }
 

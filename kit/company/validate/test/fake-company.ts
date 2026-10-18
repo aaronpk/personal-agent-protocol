@@ -283,7 +283,7 @@ export function fakeCompany(agentDir: string, flaws: Flaws = {}): FetchLike {
     }
 
     const poppy = () => ({
-        protocol_version: "0.1",
+        protocol_version: "0.2",
         organization: { name: "Shop", domain: flaws.domain ?? "shop.test" },
         auth: { issuer: ORIGIN, direct: { scopes: ["poppy:read"] } },
         agent: { protocols: [{ type: "poppy", endpoint: CONV }] },

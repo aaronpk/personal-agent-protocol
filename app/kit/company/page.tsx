@@ -5,7 +5,7 @@ import { DocsNav } from "../../../components/docs-nav";
 import { KitArchitecture } from "../../../components/kit-architecture";
 import { KitInstall } from "../../../components/kit-install";
 import { SpecTable } from "../../../components/spec-table";
-import { protocolVersion } from "../../../lib/kit/files";
+import { docsHref, LATEST, SPEC_HREF } from "../../../content/docs";
 import type { OutlineSection } from "../../../lib/docs-outline";
 import {
     BASE_OPEN_GRAPH,
@@ -43,10 +43,7 @@ const INSTALL = [
                 <CodeBlock
                     text={`/plugin marketplace add ${REPO}\n/plugin install personal-agent-protocol@personal-agent-protocol`}
                 />
-                <p>
-                    Then ask Claude to add Personal Agent Protocol support. The plugin also has the{" "}
-                    <code>poppy-review</code> skill, for reviewing the docs.
-                </p>
+                <p>Then ask Claude to add Personal Agent Protocol support.</p>
             </>
         ),
     },
@@ -147,7 +144,6 @@ function Table({ head, rows }: { head: string[]; rows: ReactNode[][] }) {
 }
 
 export default function Page() {
-    const version = protocolVersion();
     return (
         <div className="docs-layout">
             <DocsNav
@@ -172,8 +168,9 @@ export default function Page() {
                     </li>
                 </ul>
                 <p>
-                    The kit follows draft {version} of the <a href="/docs/spec">spec</a>. It covers
-                    the Company side only. It doesn&rsquo;t cover building a Personal Agent.
+                    The kit follows {LATEST.label.toLowerCase()} of the <a href={SPEC_HREF}>spec</a>
+                    . It covers the Company side only. It doesn&rsquo;t cover building a Personal
+                    Agent.
                 </p>
 
                 <h2 id="requirements">Requirements</h2>
@@ -349,7 +346,7 @@ export default function Page() {
                     If a check looks wrong, use the &ldquo;Disagree?&rdquo; link in its output. It
                     opens an issue with the check and its requirement filled in. See also{" "}
                     <a href="/docs/path-to-1#feedback">how to give feedback</a> and the{" "}
-                    <a href="/docs/guides">implementation guides</a>.
+                    <a href={docsHref("guides")}>implementation guides</a>.
                 </p>
             </article>
         </div>

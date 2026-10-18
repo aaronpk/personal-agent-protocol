@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Menu, X } from "lucide-react";
+import { docsTabsFor, tabFor } from "../content/docs";
 import type { OutlinePage, OutlineSection } from "../lib/docs-outline";
+import { useDocsVersion } from "./docs-version";
 
 function flatten(sections: OutlineSection[]): OutlineSection[] {
     return sections.flatMap((section) => [section, ...flatten(section.subsections ?? [])]);
@@ -12,10 +14,25 @@ function flatten(sections: OutlineSection[]): OutlineSection[] {
 // and highlight as the reader scrolls, or when clicked; sections on the tab's other pages link
 // across. A tab with one page shows only its sections, since the tab already names the page.
 // On narrow screens the outline folds into a menu button that stays under the header and names
-// the current section.
-// `pages` is the outline of the tab's pages.
-export function DocsNav({ current, pages: tabPages }: { current: string; pages: OutlinePage[] }) {
+// the current section. On phones, which have no docs tabs, the bar is a breadcrumb: the current
+// tab, which opens a menu of the version and the tabs, then the current section, which opens the
+// outline.
+// `pages` is the outline of the tab's pages. `version` is the version menu for the tabs menu.
+export function DocsNav({
+    current,
+    pages: tabPages,
+    version,
+}: {
+    current: string;
+    pages: OutlinePage[];
+    version?: ReactNode;
+}) {
     const page = tabPages.find((p) => p.href === current);
+    const tabs = docsTabsFor(useDocsVersion(current));
+    const tab = tabFor(current);
+    // On phones, the menu of the version and the tabs. At most one menu is open.
+    const [tabsOpen, setTabsOpen] = useState(false);
+    const tabsToggleRef = useRef<HTMLButtonElement>(null);
     const [active, setActive] = useState(page?.sections[0]?.id ?? "");
     const [open, setOpen] = useState(false);
     const asideRef = useRef<HTMLElement>(null);
@@ -61,20 +78,22 @@ export function DocsNav({ current, pages: tabPages }: { current: string; pages: 
         return () => window.removeEventListener("scroll", update);
     }, [page]);
 
-    // Close the menu on Escape or a click outside it.
+    // Close the menus on Escape or a click outside them.
     useEffect(() => {
-        if (!open) {
+        if (!open && !tabsOpen) {
             return;
         }
         function onKey(e: KeyboardEvent) {
             if (e.key === "Escape") {
+                (open ? toggleRef : tabsToggleRef).current?.focus();
                 setOpen(false);
-                toggleRef.current?.focus();
+                setTabsOpen(false);
             }
         }
         function onDown(e: MouseEvent) {
             if (!asideRef.current?.contains(e.target as Node)) {
                 setOpen(false);
+                setTabsOpen(false);
             }
         }
         document.addEventListener("keydown", onKey);
@@ -83,7 +102,7 @@ export function DocsNav({ current, pages: tabPages }: { current: string; pages: 
             document.removeEventListener("keydown", onKey);
             document.removeEventListener("mousedown", onDown);
         };
-    }, [open]);
+    }, [open, tabsOpen]);
 
     // When the menu opens, scroll it to the current section.
     useEffect(() => {
@@ -151,19 +170,67 @@ export function DocsNav({ current, pages: tabPages }: { current: string; pages: 
 
     const activeLabel = flatten(page?.sections ?? []).find((s) => s.id === active)?.label;
     return (
-        <aside className={`toc${open ? " toc-open" : ""}`} ref={asideRef}>
-            <button
-                type="button"
-                className="toc-toggle"
-                ref={toggleRef}
-                aria-expanded={open}
-                aria-controls="toc-sections"
-                onClick={() => setOpen(!open)}
-            >
-                {open ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
-                <span className="sr-only">Sections, </span>
-                <span className="toc-toggle-label">{activeLabel ?? "On this page"}</span>
-            </button>
+        <aside
+            className={`toc${open ? " toc-open" : ""}${tabsOpen ? " toc-tabs-open" : ""}`}
+            ref={asideRef}
+        >
+            <div className="toc-bar">
+                {tab ? (
+                    <>
+                        <button
+                            type="button"
+                            className="toc-crumb"
+                            ref={tabsToggleRef}
+                            aria-expanded={tabsOpen}
+                            aria-controls="toc-tabs"
+                            onClick={() => {
+                                setTabsOpen(!tabsOpen);
+                                setOpen(false);
+                            }}
+                        >
+                            <span className="sr-only">Docs pages, </span>
+                            <span className="toc-crumb-label">{tab.title}</span>
+                            <ChevronDown size={14} aria-hidden="true" />
+                        </button>
+                        <ChevronRight className="toc-crumb-sep" size={14} aria-hidden="true" />
+                    </>
+                ) : null}
+                <button
+                    type="button"
+                    className="toc-toggle"
+                    ref={toggleRef}
+                    aria-expanded={open}
+                    aria-controls="toc-sections"
+                    onClick={() => {
+                        setOpen(!open);
+                        setTabsOpen(false);
+                    }}
+                >
+                    {open ? (
+                        <X className="toc-toggle-icon" size={18} aria-hidden="true" />
+                    ) : (
+                        <Menu className="toc-toggle-icon" size={18} aria-hidden="true" />
+                    )}
+                    <span className="sr-only">Sections, </span>
+                    <span className="toc-toggle-label">{activeLabel ?? "On this page"}</span>
+                    <ChevronDown className="toc-crumb-chevron" size={14} aria-hidden="true" />
+                </button>
+            </div>
+            <div className="toc-tabs-menu" id="toc-tabs">
+                {version ? <div className="toc-version">{version}</div> : null}
+                <nav aria-label="Documentation">
+                    {tabs.map((t) => (
+                        <a
+                            key={t.href}
+                            href={t.href}
+                            className={`${t.versioned ? "versioned" : ""}${t === tab ? " current" : ""}`}
+                            aria-current={t === tab ? "page" : undefined}
+                        >
+                            {t.title}
+                        </a>
+                    ))}
+                </nav>
+            </div>
             <nav aria-label="Sections" id="toc-sections">
                 {tabPages.map((p) => (
                     <div key={p.href}>

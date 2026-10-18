@@ -1,0 +1,16 @@
+[
+    {
+        "id": "0.2",
+        "pages": ["spec", "extensions", "extensions/operations", "guides"]
+    },
+    {
+        "id": "0.1",
+        "published": "2026-10-09",
+        "pages": {
+            "spec": "0177017aeb839313979bcfccf6836c81c79ea2328db9864c3ec1f70a18a54ff0",
+            "extensions": "f7b71b97f3151337a6ce67f015b0fe8fdf28234df2700335aca47dd5afad2eff",
+            "extensions/operations": "693c9c3e6c1c21d788194d12950985c08d60b5c042a9aa6efd30248d5c2315b1",
+            "guides": "3432c145a045daab70e9ea15885c0b52250041b8de683afc28e730cd921bad07"
+        }
+    }
+]

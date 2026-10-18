@@ -2,8 +2,8 @@
 
 Every request with a DPoP Session Token, and every token request, carries a DPoP Proof. The Company
 MUST validate each one as RFC 9449 §4.3 describes, which
-[4.3](https://personalagentprotocol.org/docs/spec#sending-tokens) lists. Use an existing DPoP or
-JOSE library rather than writing the checks yourself. The [guides](https://personalagentprotocol.org/docs/guides#company-dpop) cover how to make
+[4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens) lists. Use an existing DPoP or
+JOSE library rather than writing the checks yourself. The [guides](https://personalagentprotocol.org/docs/0.2/guides#company-dpop) cover how to make
 them reliably.
 
 ## A. At a gateway
@@ -32,7 +32,7 @@ Each service verifies proofs itself, with a shared library.
 ## The replay cache
 
 The replay rules differ by endpoint
-([4.3](https://personalagentprotocol.org/docs/spec#sending-tokens), "Replayed proofs"):
+([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens), "Replayed proofs"):
 
 - **Token endpoint: required.** The Company MUST reject a proof whose `jti` it already accepted
   within the acceptance window. Traffic here is low, so the cache is cheap. Share it across every
@@ -53,7 +53,7 @@ For any cache:
 - Key it by `jti` and keep entries for the acceptance window.
 - Use an atomic "insert if absent" operation, so two servers can't both accept the same `jti`.
 - The same cache can hold assertion `jti`s (4.2) and browser assertion `jti`s
-  ([section 5](https://personalagentprotocol.org/docs/spec#web-browsing)), each kept until its
+  ([section 5](https://personalagentprotocol.org/docs/0.2/spec#web-browsing)), each kept until its
   assertion expires.
 - Decide what happens if the cache is unavailable. At the token endpoint, refuse token requests
   rather than accept proofs unchecked.
@@ -62,13 +62,13 @@ For any cache:
 
 `htu` is the URL the Personal Agent used, without query or fragment (4.3). Behind proxies and load
 balancers, build the expected URL from your configured public origin, not from the `Host` header
-your server receives ([guides](https://personalagentprotocol.org/docs/guides#company-dpop)). Watch
+your server receives ([guides](https://personalagentprotocol.org/docs/0.2/guides#company-dpop)). Watch
 for path rewrites, such as a gateway that strips a prefix.
 
 ## Also
 
 - Publish `dpop_signing_alg_values_supported` in the OAuth metadata, including `ES256`
-  ([3.2](https://personalagentprotocol.org/docs/spec#oauth-server)), and accept exactly those
+  ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)), and accept exactly those
   algorithms. Require `typ: dpop+jwt` and a `jwk` with only a public key.
 - Use an acceptance window of about a minute, plus a small clock skew. It can be judged by `iat`, or
   by when you issued the proof's nonce.

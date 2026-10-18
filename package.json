@@ -12,6 +12,9 @@
         "typecheck": "tsc --noEmit",
         "format:check": "prettier --check .",
         "kit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-hooks.mjs scripts/kit.ts",
+        "docs:sync": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-hooks.mjs scripts/docs.ts sync",
+        "docs:publish": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-hooks.mjs scripts/docs.ts publish",
+        "docs:draft": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/ts-hooks.mjs scripts/docs.ts draft",
         "test:kit": "node --test \"kit/company/validate/test/*.test.ts\""
     },
     "dependencies": {

@@ -6,6 +6,7 @@ import { mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
+import { PROTOCOL_VERSION } from "../catalog.ts";
 import { newContext, type CheckResult } from "../checks/types.ts";
 import { createHttp } from "../http.ts";
 import { keygen, UsageError } from "../identity.ts";
@@ -70,7 +71,10 @@ test("a token endpoint that accepts a replayed DPoP proof fails dpop.token-repla
         r.quote,
         "At the token endpoint, the Company MUST reject a proof whose jti it has already accepted within the acceptance window",
     );
-    assert.equal(r.specUrl, "https://personalagentprotocol.org/docs/spec#sending-tokens");
+    assert.equal(
+        r.specUrl,
+        `https://personalagentprotocol.org/docs/${PROTOCOL_VERSION}/spec#sending-tokens`,
+    );
     assert.match(r.disagreeUrl, /template=1-feedback\.yml/);
     const ex = r.exchanges!.at(-1)!;
     assert.match(

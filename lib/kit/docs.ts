@@ -3,6 +3,8 @@ import { DOCS_PAGES, type DocsPage } from "../../content/docs";
 import { pageSource } from "../docs-content";
 import { headingId, textOf } from "../mdx";
 
+export { headingIds } from "../docs-content";
+
 // What the kit reads from the docs: each page's heading ids, its requirement sentences, and its
 // code examples, each with the section it's in.
 
@@ -28,18 +30,6 @@ function blocks(tree: Root): Block[] {
         }
         return { node, section };
     });
-}
-
-// Every heading id on the page, at any depth.
-export function headingIds(page: DocsPage): Set<string> {
-    const ids = new Set<string>();
-    for (const node of pageSource(page).tree.children) {
-        const id = node.type === "heading" ? headingId(node) : undefined;
-        if (id) {
-            ids.add(id);
-        }
-    }
-    return ids;
 }
 
 // Plain text, with each run of whitespace one space, for comparing quotes with the docs.

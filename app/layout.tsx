@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Comments } from "../components/comments";
 import { SiteFooter, SiteHeader } from "../components/site-chrome";
 import { ClickEvents } from "../components/click-events";
+import { SPEC_HREF } from "../content/docs";
 import { docsOutline } from "../lib/docs-content";
 import { sectionIds } from "../lib/docs-outline";
 import { BASE_OPEN_GRAPH, BASE_TWITTER, SITE_NAME, SITE_URL } from "../lib/site";
@@ -45,12 +46,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en" className={`${sans.variable} ${mono.variable}`}>
             <body>
-                <SiteHeader />
+                <SiteHeader outline={outline} />
                 <main id="main">{children}</main>
                 <SiteFooter />
                 <Comments outline={outline} />
                 <Analytics />
-                <ClickEvents specSections={sectionIds(outline, "/docs/spec")} />
+                <ClickEvents specSections={sectionIds(outline, SPEC_HREF)} />
             </body>
         </html>
     );

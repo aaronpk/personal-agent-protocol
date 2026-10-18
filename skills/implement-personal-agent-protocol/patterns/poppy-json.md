@@ -1,9 +1,9 @@
 # Pattern: serving poppy.json
 
 `poppy.json` is served at `https://{domain}/.well-known/poppy.json` on the Company's own domain
-([section 3](https://personalagentprotocol.org/docs/spec#discovery)). The document speaks for the
+([section 3](https://personalagentprotocol.org/docs/0.2/spec#discovery)). The document speaks for the
 host that serves it after any redirects, and `organization.domain` must be that host
-([3.1](https://personalagentprotocol.org/docs/spec#fields)).
+([3.1](https://personalagentprotocol.org/docs/0.2/spec#fields)).
 
 ## Options
 
@@ -20,7 +20,7 @@ their own endpoints and issuer.
 
 - Fits: Companies with several environments or several country domains.
 - Watch for: every domain that names an issuer must appear in that issuer's `poppy_domains`
-  ([3.2](https://personalagentprotocol.org/docs/spec#oauth-server)).
+  ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)).
 
 **Served by a provider on the Company's domain.** A provider that runs part of the Company's
 Poppy support can serve the document, through a reverse proxy or a hostname the Company points at

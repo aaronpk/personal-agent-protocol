@@ -74,6 +74,29 @@ export function remarkHeadingIds() {
     };
 }
 
+// Rewrites each link with `resolve`, such as resolveDocsLink, which points links to the docs at a
+// page's version.
+export function remarkVersionLinks(resolve: (url: string) => string = (url) => url) {
+    return () => (tree: Root) => {
+        visit(tree, (node) => {
+            if (node.type === "link") {
+                node.url = resolve(node.url);
+            }
+        });
+    };
+}
+
+// The links on a page, in order.
+export function linksOf(tree: Root): string[] {
+    const links: string[] = [];
+    visit(tree, (node) => {
+        if (node.type === "link") {
+            links.push(node.url);
+        }
+    });
+    return links;
+}
+
 export function headingId(heading: Heading): string | undefined {
     const id = heading.data?.hProperties?.id;
     return typeof id === "string" ? id : undefined;
@@ -81,10 +104,12 @@ export function headingId(heading: Heading): string | undefined {
 
 const parser = createProcessor({ remarkPlugins: [remarkGfm] });
 
-// Parses MDX into a Markdown syntax tree, with heading ids applied.
-export function parseMdx(source: string): Root {
+// Parses MDX into a Markdown syntax tree, with heading ids applied and links rewritten with
+// `resolve`.
+export function parseMdx(source: string, resolve?: (url: string) => string): Root {
     const tree = parser.parse(escapeHeadingIds(source)) as Root;
     remarkHeadingIds()(tree);
+    remarkVersionLinks(resolve)()(tree);
     return tree;
 }
 

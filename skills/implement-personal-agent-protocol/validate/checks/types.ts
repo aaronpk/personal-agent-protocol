@@ -1,7 +1,13 @@
 // The shape of check results, the context checks run in, and a recorder that turns check outcomes
 // into results with the requirement, links, and redacted exchanges filled in.
 
-import { CATALOG, checkInfo, type CheckInfo, type Milestone } from "../catalog.ts";
+import {
+    CATALOG,
+    checkInfo,
+    PROTOCOL_VERSION,
+    type CheckInfo,
+    type Milestone,
+} from "../catalog.ts";
 import { errorCode, type Exchange, type Http } from "../http.ts";
 import type { Identity } from "../identity.ts";
 import type { SigningKey } from "../jose.ts";
@@ -130,7 +136,7 @@ const ISSUES = "https://github.com/personal-agent-protocol/personal-agent-protoc
 
 export function specUrl(section: string): string {
     const [page, id] = section.split("#");
-    return `${SITE}/docs/${page}#${id}`;
+    return `${SITE}/docs/${PROTOCOL_VERSION}/${page}#${id}`;
 }
 
 export function disagreeUrl(info: CheckInfo): string {

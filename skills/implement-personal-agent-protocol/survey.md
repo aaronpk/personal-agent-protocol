@@ -21,9 +21,9 @@ Start `plan/feedback.md` now (see `feedback.md`).
 **Domains.** The domains the Company serves customers on, and whether they redirect (for example
 `example.com` to `www.example.com`). `organization.domain` in `poppy.json` has to be the host that
 serves the document after redirects
-([3.1](https://personalagentprotocol.org/docs/spec#fields)). Countries or brands on other domains
+([3.1](https://personalagentprotocol.org/docs/0.2/spec#fields)). Countries or brands on other domains
 that should be one Company share one issuer
-([3.2](https://personalagentprotocol.org/docs/spec#oauth-server)).
+([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)).
 
 **The OAuth server or identity provider.** This decides the token endpoint pattern
 (`patterns/token-endpoint.md`). Find out whether it:

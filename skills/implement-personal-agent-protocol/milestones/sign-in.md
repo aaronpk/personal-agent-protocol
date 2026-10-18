@@ -6,28 +6,28 @@ offers only signed-out Sessions.
 
 ## Read first
 
-- [4.4 Signing in](https://personalagentprotocol.org/docs/spec#sign-in), including "Scopes" and "How
+- [4.4 Signing in](https://personalagentprotocol.org/docs/0.2/spec#sign-in), including "Scopes" and "How
   sign-in is remembered"
-- [4.5 Direct Sign-In](https://personalagentprotocol.org/docs/spec#direct-sign-in),
-  [4.6 Device Sign-In](https://personalagentprotocol.org/docs/spec#device-sign-in),
-  [4.7 Mediated Sign-In](https://personalagentprotocol.org/docs/spec#mediated-sign-in): the ones
+- [4.5 Direct Sign-In](https://personalagentprotocol.org/docs/0.2/spec#direct-sign-in),
+  [4.6 Device Sign-In](https://personalagentprotocol.org/docs/0.2/spec#device-sign-in),
+  [4.7 Mediated Sign-In](https://personalagentprotocol.org/docs/0.2/spec#mediated-sign-in): the ones
   the design chose
-- [4.8 Account Tokens](https://personalagentprotocol.org/docs/spec#account-tokens)
-- [4.9 Signing out](https://personalagentprotocol.org/docs/spec#sign-out)
-- [7.11 Sign-in during a conversation](https://personalagentprotocol.org/docs/spec#conversation-sign-in)
-- Guides: [Consent pages](https://personalagentprotocol.org/docs/guides#company-consent),
-  [Device sign-in](https://personalagentprotocol.org/docs/guides#company-device),
-  [Mediated sign-in](https://personalagentprotocol.org/docs/guides#company-mediated),
-  [Token lifetimes and sign-out](https://personalagentprotocol.org/docs/guides#company-lifetimes),
-  [Account settings](https://personalagentprotocol.org/docs/guides#company-account-settings),
-  [Enforcing scopes everywhere](https://personalagentprotocol.org/docs/guides#company-scopes)
+- [4.8 Account Tokens](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)
+- [4.9 Signing out](https://personalagentprotocol.org/docs/0.2/spec#sign-out)
+- [7.11 Sign-in during a conversation](https://personalagentprotocol.org/docs/0.2/spec#conversation-sign-in)
+- Guides: [Consent pages](https://personalagentprotocol.org/docs/0.2/guides#company-consent),
+  [Device sign-in](https://personalagentprotocol.org/docs/0.2/guides#company-device),
+  [Mediated sign-in](https://personalagentprotocol.org/docs/0.2/guides#company-mediated),
+  [Token lifetimes and sign-out](https://personalagentprotocol.org/docs/0.2/guides#company-lifetimes),
+  [Account settings](https://personalagentprotocol.org/docs/0.2/guides#company-account-settings),
+  [Enforcing scopes everywhere](https://personalagentprotocol.org/docs/0.2/guides#company-scopes)
 
 Patterns: `patterns/sign-in.md`, `patterns/scopes.md`, `patterns/session-records.md`,
 `patterns/token-endpoint.md`.
 
 ## What to build
 
-**Scopes** ([4.4](https://personalagentprotocol.org/docs/spec#sign-in)). Each type's `scopes` in
+**Scopes** ([4.4](https://personalagentprotocol.org/docs/0.2/spec#sign-in)). Each type's `scopes` in
 `poppy.json`, and `auth.custom_scopes` with a description for each custom scope. Every sign-in
 request must include `scope`. Reject missing, unknown, or unavailable scopes with `invalid_scope`.
 Never grant more than was requested and allowed for the type. The User may approve fewer.
@@ -41,11 +41,11 @@ the User signs in to a different account, the code exchange, device poll, or Med
 returns `account_mismatch` and issues no tokens. A pending or failed sign-in leaves existing tokens
 unchanged.
 
-**Direct Sign-In** ([4.5](https://personalagentprotocol.org/docs/spec#direct-sign-in)).
+**Direct Sign-In** ([4.5](https://personalagentprotocol.org/docs/0.2/spec#direct-sign-in)).
 
 - `authorization_endpoint` in the OAuth metadata and `auth.direct` in `poppy.json`.
 - The authorization code flow with PKCE. Accept `S256` only
-  ([guides](https://personalagentprotocol.org/docs/guides#company-consent)).
+  ([guides](https://personalagentprotocol.org/docs/0.2/guides#company-consent)).
 - `redirect_uri` exactly matches an entry in the Personal Agent's `redirect_uris`.
 - The consent page shows the Personal Agent's name and logo, the domain of its `client_id`, the
   account, each scope in plain language, and how long access lasts. The User can approve some or
@@ -54,7 +54,7 @@ unchanged.
 - The code exchange takes `session_id`, the client assertion, and a DPoP Proof, and checks the
   Session belongs to the same `client_id`.
 
-**Device Sign-In** ([4.6](https://personalagentprotocol.org/docs/spec#device-sign-in)).
+**Device Sign-In** ([4.6](https://personalagentprotocol.org/docs/0.2/spec#device-sign-in)).
 
 - `device_authorization_endpoint` in the metadata and `auth.device` in `poppy.json`.
 - The device authorization request with the client assertion. The poll at `token_endpoint` with
@@ -63,7 +63,7 @@ unchanged.
   never approves by itself.
 - Poll responses: `authorization_pending`, `slow_down`, `access_denied`, `expired_token`.
 
-**Mediated Sign-In** ([4.7](https://personalagentprotocol.org/docs/spec#mediated-sign-in)).
+**Mediated Sign-In** ([4.7](https://personalagentprotocol.org/docs/0.2/spec#mediated-sign-in)).
 
 - `auth.mediated` with `endpoint`, `fields`, and `scopes`.
 - The endpoint takes a DPoP Session Token and JSON with `scope` and `credentials`. Statuses
@@ -72,9 +72,9 @@ unchanged.
 - Errors `invalid_scope`, `account_mismatch`, and `sign_in_not_found` as JSON bodies.
 - Rate-limit attempts, never return credentials, and require a one-time code when a sign-in looks
   unusual. Return the same `failed` for an unknown account and a wrong password
-  ([guides](https://personalagentprotocol.org/docs/guides#company-mediated)).
+  ([guides](https://personalagentprotocol.org/docs/0.2/guides#company-mediated)).
 
-**Account Tokens** ([4.8](https://personalagentprotocol.org/docs/spec#account-tokens)).
+**Account Tokens** ([4.8](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)).
 
 - The `refresh_token` grant with the client assertion and DPoP Proof. With `session_id`, return a
   token for that Session, signing it in if it was signed out. Without one, start a new signed-in
@@ -87,9 +87,9 @@ unchanged.
   optional.
 - Expired or revoked: `invalid_grant`, and the Session continues signed out.
 - For MCP: the same grant without `DPoP` and with `resource` returns a Bearer token for that MCP
-  server ([4.3](https://personalagentprotocol.org/docs/spec#sending-tokens)).
+  server ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
 
-**Signing out** ([4.9](https://personalagentprotocol.org/docs/spec#sign-out)). RFC 7009 revocation
+**Signing out** ([4.9](https://personalagentprotocol.org/docs/0.2/spec#sign-out)). RFC 7009 revocation
 with the client assertion. Revoke the Account Token and sign out every Session signed in with it.
 Sessions usually continue signed out. Check on each request whether the Session is still signed in,
 or use much shorter Session Token lifetimes.
@@ -97,14 +97,14 @@ or use much shorter Session Token lifetimes.
 **Account settings** (4.9). The User can disconnect a Personal Agent, which revokes its Account
 Tokens for that account and signs out its Sessions. List each connected Personal Agent with its
 name, domain, scopes, and last use
-([guides](https://personalagentprotocol.org/docs/guides#company-account-settings)).
+([guides](https://personalagentprotocol.org/docs/0.2/guides#company-account-settings)).
 
 **Scopes on every channel** (4.4,
-[guides](https://personalagentprotocol.org/docs/guides#company-scopes)). One shared check that the
+[guides](https://personalagentprotocol.org/docs/0.2/guides#company-scopes)). One shared check that the
 website, APIs, MCP tools, the Company Agent's tools, and live agents' tools all call.
 `poppy:write` doesn't include `poppy:read`. See `patterns/scopes.md`.
 
-**Conversations** ([7.11](https://personalagentprotocol.org/docs/spec#conversation-sign-in)).
+**Conversations** ([7.11](https://personalagentprotocol.org/docs/0.2/spec#conversation-sign-in)).
 
 - When the Company Agent needs the account, add an `authorization` event with `sign_in_required` or
   `insufficient_scope` and `scope`, and also ask in a message.
@@ -115,9 +115,9 @@ website, APIs, MCP tools, the Company Agent's tools, and live agents' tools all 
   change. A message never authorizes an account action.
 
 **Website.** The browser-session cookie follows the Session's sign-in state and scopes on the next
-request ([section 5](https://personalagentprotocol.org/docs/spec#web-browsing)).
+request ([section 5](https://personalagentprotocol.org/docs/0.2/spec#web-browsing)).
 
-**MCP clients without Poppy** ([section 6](https://personalagentprotocol.org/docs/spec#apis)). If the
+**MCP clients without Poppy** ([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)). If the
 MCP server is listed, an MCP client can sign in with MCP's own authorization flow. Treat that as a
 new signed-in Session with no User ID, which ends when the sign-in is revoked or expires.
 
@@ -128,7 +128,7 @@ new signed-in Session with no User ID, which ends when the sign-in is revoked or
   compromise).
 - Whether sign-out ends Sessions or lets them continue signed out.
 - Whether to close conversations that used the account when a Session signs out (the
-  [guides](https://personalagentprotocol.org/docs/guides#company-conversations) recommend it).
+  [guides](https://personalagentprotocol.org/docs/0.2/guides#company-conversations) recommend it).
 - For Mediated Sign-In: attempt limits, when to require a one-time code, and how the User is told.
 
 ## Common mistakes
@@ -146,7 +146,7 @@ new signed-in Session with no User ID, which ends when the sign-in is revoked or
   doesn't allow (7.9, 7.11).
 - Treating `poppy:write` as including `poppy:read`.
 - Logging Mediated Sign-In request bodies or one-time codes
-  ([guides](https://personalagentprotocol.org/docs/guides#company-mediated)).
+  ([guides](https://personalagentprotocol.org/docs/0.2/guides#company-mediated)).
 
 ## Check it
 

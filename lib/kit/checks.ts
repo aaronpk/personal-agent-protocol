@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CATALOG } from "../../kit/company/validate/catalog.ts";
+import { CATALOG, PROTOCOL_VERSION } from "../../kit/company/validate/catalog.ts";
+import { ALL_DOCS_PAGES, LATEST } from "../../content/docs";
 import { SITE_URL } from "../site";
 import { headingIds, pageByName, pageText } from "./docs";
 import { checkSpecExamples } from "./examples";
@@ -33,12 +34,15 @@ function normalized(text: string): string {
 function checkLinks(): string[] {
     const problems: string[] = [];
     const site = SITE_URL.replace(/[.]/g, "\\.");
-    const pattern = new RegExp(`${site}/docs/([a-z0-9/-]+)(?:#([A-Za-z0-9-]+))?`, "g");
+    const pattern = new RegExp(
+        `${site}/docs/((?:\\d+\\.\\d+/)?[a-z0-9/-]+)(?:#([A-Za-z0-9-]+))?`,
+        "g",
+    );
     for (const file of generatedFiles()) {
         for (const match of file.content.matchAll(pattern)) {
             const [url, path, id] = match;
-            const page = pageByName(path.split("/").pop()!);
-            if (!page || page.href !== `/docs/${path.replace(/\.md$/, "")}`) {
+            const page = ALL_DOCS_PAGES.find((p) => p.href === `/docs/${path}`);
+            if (!page) {
                 problems.push(`${file.path}: ${url} isn't a docs page.`);
             } else if (id && !headingIds(page).has(id)) {
                 problems.push(`${file.path}: ${url} links to a heading id that doesn't exist.`);
@@ -71,9 +75,19 @@ function checkCatalog(): string[] {
     return problems;
 }
 
+// The validator checks the latest version, which the kit follows.
+function checkVersion(): string[] {
+    return PROTOCOL_VERSION === LATEST.id
+        ? []
+        : [
+              `catalog.ts: PROTOCOL_VERSION is ${PROTOCOL_VERSION}, but the latest version is ${LATEST.id}.`,
+          ];
+}
+
 export function kitProblems(): string[] {
     const stale = staleFiles();
     return [
+        ...checkVersion(),
         ...checkSpecExamples(schemas()),
         ...checkLinks(),
         ...checkCatalog(),

@@ -93,7 +93,7 @@ test("a failing check has every feedback field, and no secrets", () => {
     const disagree = new URL(result.disagreeUrl);
     assert.equal(disagree.searchParams.get("template"), "1-feedback.yml");
     assert.equal(disagree.searchParams.get("page"), "Company kit");
-    assert.match(result.specUrl, /^https:\/\/personalagentprotocol\.org\/docs\/spec#/);
+    assert.match(result.specUrl, /^https:\/\/personalagentprotocol\.org\/docs\/\d+\.\d+\/spec#/);
 });
 
 test("color only when enabled", () => {

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "./button";
 import { captureAnchor, locateAnchors, type Anchor, type Located } from "../lib/comment-anchors";
-import { DOCS_PAGES } from "../content/docs";
+import { ALL_DOCS_PAGES, LATEST, resolveDocsLink, versionOf } from "../content/docs";
 import { allSections, type OutlinePage } from "../lib/docs-outline";
 import {
     FeedbackError,
@@ -26,20 +26,15 @@ import {
     serializeFeedback,
     type Thread,
 } from "../lib/feedback-format";
-import { downloadBlob, downloadDocs } from "./docs-download";
-import {
-    DOWNLOAD_KIT_EVENT,
-    reportCommentingEnabled,
-    SET_COMMENTING_EVENT,
-} from "./feedback-actions";
+import { downloadBlob } from "./docs-download";
+import { reportCommentingEnabled, SET_COMMENTING_EVENT } from "./feedback-actions";
 
 // Private review comments on any page. Hidden by default: the first Cmd+. (Ctrl+. off a Mac) turns
 // them on and shows the switch in the bottom-right corner, which stays from then on. The switch or
 // the shortcut turns them on and off, on every page at once. Select text to comment on it. Comments are kept in this
 // browser's localStorage only. The menu on the comment count lists the pages with comments, shows
-// resolved ones, and clears them all. The "…" menu copies them as Markdown, exports and imports
-// them as a file, and downloads the review kit: the docs for an AI agent to review. It shows even
-// while comments are off. While they're on, dragging a file onto the page shows a box to drop it
+// resolved ones, and clears them all. The "…" menu copies them as Markdown, and exports and imports
+// them as a file. It shows even while comments are off. While they're on, dragging a file onto the page shows a box to drop it
 // in and import it.
 // Nothing on the page moves: when there's room to the right of the text, each comment floats there
 // level with the text it's on. Otherwise the selected comment opens in a panel at the bottom of
@@ -107,29 +102,41 @@ function store(key: string, value: string | null) {
 
 type Result = { ok: boolean; text: string };
 
-const KIT_TIP = "Useful if you want to use an agent to review and provide feedback";
 const HIDE_TIP = "Hides this bar. Your comments are kept, and turning comments on brings it back.";
 
 function plural(n: number, word: string) {
     return `${n} ${word}${n === 1 ? "" : "s"}`;
 }
 
+// Comments saved before versioned pages had the version in their URL, such as on /docs/spec, move
+// to the latest version's page, which they were about.
 function readThreads(): Thread[] {
     try {
         const parsed = JSON.parse(load(THREADS_KEY) ?? "[]");
-        return Array.isArray(parsed) ? parsed : [];
+        return Array.isArray(parsed)
+            ? parsed.map((t: Thread) =>
+                  typeof t?.page === "string" ? { ...t, page: resolveDocsLink(t.page) } : t,
+              )
+            : [];
     } catch {
         return [];
     }
 }
 
+// A page's name in the comments list. Pages of earlier drafts say which, such as
+// "Specification (0.1)".
 function pageTitle(href: string): string {
-    return href === "/" ? "Home" : (DOCS_PAGES.find((p) => p.href === href)?.navTitle ?? href);
+    if (href === "/") {
+        return "Home";
+    }
+    const title = ALL_DOCS_PAGES.find((p) => p.href === href)?.navTitle ?? href;
+    const version = versionOf(href);
+    return version && version !== LATEST ? `${title} (${version.id})` : title;
 }
 
 function pageRank(href: string): number {
-    const at = DOCS_PAGES.findIndex((p) => p.href === href);
-    return href === "/" ? -1 : at < 0 ? DOCS_PAGES.length : at;
+    const at = ALL_DOCS_PAGES.findIndex((p) => p.href === href);
+    return href === "/" ? -1 : at < 0 ? ALL_DOCS_PAGES.length : at;
 }
 
 // Where a section falls on its page, from the docs outline. Pages without an outline sort by time.
@@ -884,34 +891,13 @@ export function Comments({ outline }: { outline: OutlinePage[] }) {
         setNote({ ok: true, text: `Saved ${fileName}. Others can import it from this menu.` });
     }
 
-    // Downloads the review kit: the docs, with instructions for an AI agent to review them, and the
-    // open comments for it to respond to.
-    async function downloadKit() {
-        try {
-            await downloadDocs(openAll.length ? commentsMarkdown() : undefined);
-            setNote({
-                ok: true,
-                text: "Downloaded. Unzip it, open the folder in your coding agent, and ask it to follow SKILL.md to review the docs.",
-            });
-        } catch {
-            setNote({
-                ok: false,
-                text: "The download failed. Check your connection and try again.",
-            });
-        }
-    }
-
-    // The buttons on the Path to 1.0 page enable or disable site commenting and download the review
-    // kit. Subscribed on every render, so the download uses the current comments.
+    // The button on the Path to 1.0 page enables or disables site commenting.
     useEffect(() => {
         const set = (e: Event) =>
             (e as CustomEvent<boolean>).detail === true ? turnOn(true) : hideBar();
-        const download = () => downloadKit();
         window.addEventListener(SET_COMMENTING_EVENT, set);
-        window.addEventListener(DOWNLOAD_KIT_EVENT, download);
         return () => {
             window.removeEventListener(SET_COMMENTING_EVENT, set);
-            window.removeEventListener(DOWNLOAD_KIT_EVENT, download);
         };
     });
 
@@ -1300,17 +1286,6 @@ export function Comments({ outline }: { outline: OutlinePage[] }) {
                         </button>
                         <button type="button" onClick={() => fileInput.current?.click()}>
                             Import comments…
-                        </button>
-                    </div>
-                    <div className="cm-pages-foot">
-                        <button
-                            type="button"
-                            className="cm-tip-wide"
-                            data-tip={KIT_TIP}
-                            aria-description={KIT_TIP}
-                            onClick={downloadKit}
-                        >
-                            Download review kit
                         </button>
                     </div>
                     <div className="cm-pages-foot">

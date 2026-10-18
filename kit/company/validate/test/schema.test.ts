@@ -4,7 +4,7 @@ import { formatSchemaErrors, validateSchema } from "../schema.ts";
 import { check, loadSchemas } from "../schemas.ts";
 
 const poppy = {
-    protocol_version: "0.1",
+    protocol_version: "0.2",
     organization: { name: "Alpine Retail", domain: "alpine-retail.example" },
     auth: { issuer: "https://auth.alpine-retail.example", direct: { scopes: ["orders:read"] } },
     agent: {

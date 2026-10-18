@@ -4,6 +4,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { PROTOCOL_VERSION } from "./catalog.ts";
 import { newContext, type CheckResult } from "./checks/types.ts";
 import { targetOrigin } from "./checks/discovery.ts";
 import { parseDesign, progress, type Design } from "./design.ts";
@@ -209,7 +210,7 @@ function saveResults(
     mkdirSync(dir, { recursive: true });
     const data = {
         tool: "poppy-validator",
-        protocol_version: "0.1",
+        protocol_version: PROTOCOL_VERSION,
         generated_at: new Date().toISOString(),
         target,
         hosts: [...new Set(hosts)],
