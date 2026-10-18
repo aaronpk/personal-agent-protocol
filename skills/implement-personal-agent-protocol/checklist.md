@@ -24,7 +24,8 @@ are left out.
 - [ ] **MUST**: An issuer MUST represent exactly one Company.
 - [ ] **MUST**: A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers.
 - [ ] **MUST**: The issuer MUST publish OAuth Authorization Server Metadata (RFC 8414), and `poppy_domains` in it MUST list every domain whose `poppy.json` names the issuer.
-- [ ] **MUST**: Companies MUST publish it, and it MUST include `ES256`.
+- [ ] **MUST**: Companies MUST accept DPoP Proofs (4.3) signed with `ES256`, so every Personal Agent has an algorithm that works at every Company.
+- [ ] **MUST**: A Company MAY list the algorithms it accepts in `dpop_signing_alg_values_supported`, as RFC 9449 §5.1 defines, and the list MUST then include `ES256`.
 
 ### Specification: [4.1 Agent identity](https://personalagentprotocol.org/docs/0.2/spec#agent-identity)
 
@@ -112,7 +113,7 @@ Personal agents fetch `poppy.json` files and API descriptions. Companies fetch c
 
 Section 4.3 lists the checks you MUST make on every proof. To make them reliably:
 
-- [ ] Check that `typ` is `dpop+jwt`, that `alg` is one you list in `dpop_signing_alg_values_supported` (3.2), and that `jwk` holds only a public key.
+- [ ] Check that `typ` is `dpop+jwt`, that `alg` is ES256 or one you list in `dpop_signing_alg_values_supported` (3.2), and that `jwk` holds only a public key.
 - [ ] Keep a replay cache keyed by `jti`, holding entries for the acceptance window. Your token endpoint MUST have one, shared by every server behind it. Your APIs and conversation endpoint can have one too, ideally shared the same way. Otherwise a proof accepted by one server can be replayed at another.
 - [ ] Behind proxies and load balancers, compare `htu` with the public URL the personal agent used. Build it from your configured public origin, not from the `Host` header your server receives.
 - [ ] Use an acceptance window of about one minute, plus a small clock skew.

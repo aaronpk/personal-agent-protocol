@@ -21,6 +21,7 @@ export type Flaws = {
     // DPoP failures at the APIs answered with 400 instead of 401.
     resourceDpopErrors400?: boolean;
     noDpopAlgs?: boolean;
+    dpopAlgsWithoutEs256?: boolean;
     acceptTokenEndpointAud?: boolean;
 };
 
@@ -324,7 +325,13 @@ export function fakeCompany(agentDir: string, flaws: Flaws = {}): FetchLike {
                 issuer: ORIGIN,
                 token_endpoint: TOKEN,
                 revocation_endpoint: `${ORIGIN}/oauth/revoke`,
-                ...(flaws.noDpopAlgs ? {} : { dpop_signing_alg_values_supported: ["ES256"] }),
+                ...(flaws.noDpopAlgs
+                    ? {}
+                    : {
+                          dpop_signing_alg_values_supported: flaws.dpopAlgsWithoutEs256
+                              ? ["RS256"]
+                              : ["ES256"],
+                      }),
                 authorization_endpoint: `${ORIGIN}/oauth/authorize`,
                 poppy_domains: ["shop.test"],
             });

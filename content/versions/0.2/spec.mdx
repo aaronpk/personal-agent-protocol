@@ -181,9 +181,13 @@ The Personal Agent takes these endpoints from the metadata:
 - `authorization_endpoint` starts Direct Sign-In (4.5). Required if `auth.direct` is present.
 - `device_authorization_endpoint` starts Device Sign-In (4.6). Required if `auth.device` is present.
 
-`dpop_signing_alg_values_supported` lists the algorithms the Company accepts for DPoP Proofs (4.3),
-as [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449) §5.1 defines. Companies MUST publish it, and
-it MUST include `ES256`. Personal Agents MUST sign DPoP Proofs with an algorithm from it.
+Companies MUST accept DPoP Proofs (4.3) signed with `ES256`, so every Personal Agent has an
+algorithm that works at every Company. A Company MAY list the algorithms it accepts in
+`dpop_signing_alg_values_supported`, as [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449) §5.1
+defines, and the list MUST then include `ES256`. Personal Agents MUST sign DPoP Proofs with `ES256`
+or with an algorithm from that list. The field also tells every other OAuth client of the issuer
+that it supports DPoP, so a Company whose issuer serves other clients, such as MCP clients that use
+Bearer tokens (section 6), can leave it out.
 
 The metadata MAY have other fields, which Personal Agents ignore. Personal Agents SHOULD cache it
 according to its HTTP caching headers.
@@ -429,7 +433,8 @@ DPoP in this protocol is meant to match RFC 9449, and anything this section does
 the RFC describes. Where this section and the RFC differ, this section applies. The choices it makes
 are:
 
-- Companies MUST publish `dpop_signing_alg_values_supported` and include `ES256` in it (3.2).
+- Companies MUST accept `ES256`, and listing their algorithms in `dpop_signing_alg_values_supported`
+  is optional (3.2).
 - Personal Agents MUST support nonces.
 - The token endpoint MUST reject a reused `jti`. Elsewhere the check is optional, as in the RFC.
 - Session Tokens for MCP are Bearer tokens, and Companies MUST require DPoP everywhere else (below).

@@ -101,8 +101,13 @@ test("DPoP errors at an API with 400 instead of 401 fail dpop.missing-proof only
     assert.match(wrongKey.notes![0], /HTTP 400/);
 });
 
-test("metadata without dpop_signing_alg_values_supported fails metadata.dpop-algs", async () => {
+test("metadata without dpop_signing_alg_values_supported passes metadata.dpop-algs", async () => {
     const { byId } = await run({ noDpopAlgs: true }, "foundation", ["metadata."]);
+    assert.equal(byId("metadata.dpop-algs").status, "pass");
+});
+
+test("dpop_signing_alg_values_supported without ES256 fails metadata.dpop-algs", async () => {
+    const { byId } = await run({ dpopAlgsWithoutEs256: true }, "foundation", ["metadata."]);
     assert.equal(byId("metadata.dpop-algs").status, "fail");
 });
 

@@ -446,14 +446,11 @@ export async function checkMetadata(ctx: Context, r: Recorder): Promise<void> {
     }
 
     const algs = json.dpop_signing_alg_values_supported;
-    if (!Array.isArray(algs)) {
-        r.fail("metadata.dpop-algs", {
-            exchange: ex,
-            got: "no dpop_signing_alg_values_supported",
-            expected: 'dpop_signing_alg_values_supported, such as ["ES256"]',
-            cause: "Personal Agents choose the DPoP signing algorithm from this list (RFC 9449 section 5.1). Add it with the algorithms your verifier accepts.",
+    if (algs === undefined) {
+        r.pass("metadata.dpop-algs", {
+            summary: "No dpop_signing_alg_values_supported, so Personal Agents sign with ES256.",
         });
-    } else if (!algs.includes("ES256")) {
+    } else if (!Array.isArray(algs) || !algs.includes("ES256")) {
         r.fail("metadata.dpop-algs", {
             exchange: ex,
             got: JSON.stringify(algs),

@@ -67,9 +67,10 @@ for path rewrites, such as a gateway that strips a prefix.
 
 ## Also
 
-- Publish `dpop_signing_alg_values_supported` in the OAuth metadata, including `ES256`
-  ([3.2](https://personalagentprotocol.org/docs/spec#oauth-server)), and accept exactly those
-  algorithms. Require `typ: dpop+jwt` and a `jwk` with only a public key.
+- Accept `ES256` ([3.2](https://personalagentprotocol.org/docs/spec#oauth-server)). If you accept
+  others, you may list them, with `ES256`, in `dpop_signing_alg_values_supported` in the OAuth
+  metadata. Leave the field out if your issuer also serves OAuth clients that shouldn't switch to
+  DPoP, such as MCP connectors. Require `typ: dpop+jwt` and a `jwk` with only a public key.
 - Use an acceptance window of about a minute, plus a small clock skew. It can be judged by `iat`, or
   by when you issued the proof's nonce.
 - Nonces are optional for the Company. They don't replace the replay cache at the token endpoint.

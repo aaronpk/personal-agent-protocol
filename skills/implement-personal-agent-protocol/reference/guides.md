@@ -96,7 +96,7 @@ Key user IDs by the company's full `auth.issuer`, including any path, not by its
 - Generate a DPoP key pair for each user at each company ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). Make it non-extractable where your platform allows, such as in a key management service or WebCrypto.
 - Never expose private keys to a model or to tools a model can call. Sign on the model's behalf in code it can't reach.
 - Sign proofs in an HTTP client hook that sees the final method and URL. Don't let the client follow redirects with the old proof: each hop needs its own proof, and the `Authorization` header shouldn't follow a redirect to another host.
-- Sign proofs with an algorithm from the company's `dpop_signing_alg_values_supported` ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)), and use ES256 when it's listed.
+- Sign proofs with ES256, which every company accepts ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)). Use another algorithm only if the company lists it in `dpop_signing_alg_values_supported`.
 - Personal agents MUST support nonces ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). On `use_dpop_nonce`, take the nonce from the `DPoP-Nonce` header, keep it for that server, and retry once with a new proof that includes it.
 - To switch to a new DPoP key, request a new session token with a proof signed by the new key. The company binds the token to that key.
 
@@ -189,7 +189,7 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 Section [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens) lists the checks you MUST make on every proof. To make them reliably:
 
-- Check that `typ` is `dpop+jwt`, that `alg` is one you list in `dpop_signing_alg_values_supported` ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)), and that `jwk` holds only a public key.
+- Check that `typ` is `dpop+jwt`, that `alg` is ES256 or one you list in `dpop_signing_alg_values_supported` ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)), and that `jwk` holds only a public key.
 - Keep a replay cache keyed by `jti`, holding entries for the acceptance window. Your token endpoint MUST have one, shared by every server behind it. Your APIs and conversation endpoint can have one too, ideally shared the same way. Otherwise a proof accepted by one server can be replayed at another.
 - Behind proxies and load balancers, compare `htu` with the public URL the personal agent used. Build it from your configured public origin, not from the `Host` header your server receives.
 - Use an acceptance window of about one minute, plus a small clock skew.

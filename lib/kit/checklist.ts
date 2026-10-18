@@ -130,7 +130,7 @@ const OVERRIDES: [string, Party | "none"][] = [
     ["Everywhere else it accepts DPoP Session Tokens", "company"],
     // 4.3's summary of how it differs from RFC 9449 repeats rules stated in full elsewhere.
     ["The token endpoint MUST reject a reused jti", "none"],
-    ["Companies MUST publish dpop_signing_alg_values_supported and include", "none"],
+    ["Companies MUST accept ES256, and listing their algorithms", "none"],
     ["Session Tokens for MCP are Bearer tokens, and Companies MUST require DPoP", "none"],
     ["Each sign-in request MUST include scope", "agent"],
     ["The client assertion's aud MUST be the Company's auth.issuer", "agent"],

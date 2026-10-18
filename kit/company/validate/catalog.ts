@@ -179,9 +179,9 @@ export const CATALOG: CheckInfo[] = [
     ),
     foundation(
         "metadata.dpop-algs",
-        "The metadata lists dpop_signing_alg_values_supported, including ES256",
+        "dpop_signing_alg_values_supported, if present, includes ES256",
         "spec#oauth-server",
-        "Companies MUST publish it, and it MUST include ES256.",
+        "the list MUST then include ES256.",
     ),
     foundation(
         "metadata.authorization-endpoint",

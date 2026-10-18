@@ -43,8 +43,7 @@ with `protocol_version`, `organization`, and `web`, and no `auth`
 
 **2. OAuth server metadata** at the issuer's RFC 8414 well-known URL
 ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)), with `issuer` exactly equal to
-`auth.issuer`, `token_endpoint`, `revocation_endpoint`, `dpop_signing_alg_values_supported`
-including `ES256`, and `poppy_domains` listing every domain whose `poppy.json` names this issuer. `authorization_endpoint` and `device_authorization_endpoint`
+`auth.issuer`, `token_endpoint`, `revocation_endpoint`, and `poppy_domains` listing every domain whose `poppy.json` names this issuer. `authorization_endpoint` and `device_authorization_endpoint`
 come in the sign-in milestone.
 
 **3. Verifying Personal Agents** ([4.1](https://personalagentprotocol.org/docs/0.2/spec#agent-identity)).

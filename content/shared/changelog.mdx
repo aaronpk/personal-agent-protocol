@@ -20,9 +20,12 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   as RFC 8414 defines ([3.2](/docs/spec#oauth-server), [4.2](/docs/spec#starting-sessions),
   [9.4](/docs/spec#assertion-audience)).
   [Issue #3](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/3)
-- **Breaking: DPoP algorithms.** Companies publish `dpop_signing_alg_values_supported` in their
-  OAuth metadata, and it includes `ES256`. Personal Agents sign DPoP Proofs with an algorithm from
-  it ([3.2](/docs/spec#oauth-server)).
+- **Breaking: DPoP algorithms.** Companies accept DPoP Proofs signed with `ES256`. They may list the
+  algorithms they accept in `dpop_signing_alg_values_supported` in their OAuth metadata, and the
+  list then includes `ES256`. A Company whose issuer serves other OAuth clients can leave the field
+  out, since it tells them the issuer supports DPoP. Personal Agents sign with `ES256` or an
+  algorithm from the list ([3.2](/docs/spec#oauth-server)).
+  [Issue #12](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/12)
 - **Breaking: `extension_required` responses.** At the token endpoint and at endpoints this protocol
   or an extension defines, the error is a JSON body. At APIs, it goes in the `WWW-Authenticate`
   header. It's listed in the token endpoint and API error tables. An MCP server returns it only to
@@ -99,7 +102,7 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Operations.** Personal Agents should show the User the values in an operation's `terms` next to
   its `summary`, or check that they agree, before asking for approval ([Operations
   5.1](/docs/extensions/operations#approval)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
-- **Guides.** Sign DPoP Proofs with ES256 when the company lists it. A company's token endpoint keeps
+- **Guides.** Sign DPoP Proofs with ES256, which every company accepts. A company's token endpoint keeps
   a replay cache shared by every server, and its APIs may keep one too. A client or Session
   assertion's `aud` is the company's `auth.issuer`. Personal agents keep Mediated Sign-In
   credentials only in a credential store the user chose, and don't sign in with them again after the
