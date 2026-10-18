@@ -10,6 +10,11 @@ welcome.
 comments on the site and export them, or download the agent kit and have an AI agent write a
 review.
 
+## Security
+
+Report vulnerabilities privately, as [SECURITY.md](SECURITY.md) describes, not in a public issue
+or pull request.
+
 ## Changes to this repository
 
 Open a pull request against `main`. Keep each pull request to one change, and describe what it
