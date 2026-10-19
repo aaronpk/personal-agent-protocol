@@ -198,7 +198,7 @@
                 },
                 {
                     "key": "Content-Security-Policy",
-                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
+                    "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://fast.wistia.com https://fast.wistia.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.wistia.com https://*.wistia.net; font-src 'self'; media-src 'self' blob: https://*.wistia.com https://*.wistia.net; connect-src 'self' https://*.wistia.com https://*.wistia.net; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'; upgrade-insecure-requests"
                 },
                 {
                     "key": "Permissions-Policy",

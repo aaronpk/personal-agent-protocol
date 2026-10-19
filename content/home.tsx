@@ -1,6 +1,7 @@
 import { ButtonLink } from "../components/button";
 import { SectionViews } from "../components/section-views";
 import { Walkthroughs } from "../components/walkthroughs";
+import { WistiaVideo } from "../components/wistia-video";
 
 const SPECTRUM = [
     { title: "Blocked", detail: "No agents allowed.", end: true },
@@ -37,6 +38,9 @@ export function HomeContent() {
                                 Read the docs
                             </ButtonLink>
                         </div>
+                    </div>
+                    <div className="hero-video">
+                        <WistiaVideo mediaId="dkxdtin9uz" />
                     </div>
                 </div>
             </section>
