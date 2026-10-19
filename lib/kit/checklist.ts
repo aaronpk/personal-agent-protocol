@@ -115,6 +115,8 @@ function lastParty(text: string): Party | undefined {
 // named last.
 const OVERRIDES: [string, Party | "none"][] = [
     ["The key words MUST", "none"],
+    ["Every URL this protocol defines or exchanges MUST be an HTTPS URL", "both"],
+    ["It MUST also check that poppy_domains includes organization.domain", "agent"],
     ["Personal Agents and Companies MUST ignore extensions", "both"],
     ["Personal Agents MUST NOT send tokens in a URL, and Companies MUST NOT", "both"],
     ["Personal Agents and Company Agents SHOULD NOT put JSON", "both"],

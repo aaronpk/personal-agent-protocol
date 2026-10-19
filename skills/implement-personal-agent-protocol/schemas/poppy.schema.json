@@ -105,7 +105,8 @@
                 "type": "object",
                 "required": ["version"],
                 "properties": {
-                    "version": { "type": "string", "minLength": 1 }
+                    "version": { "type": "string", "minLength": 1 },
+                    "endpoint": { "$ref": "#/$defs/https_url" }
                 }
             }
         }

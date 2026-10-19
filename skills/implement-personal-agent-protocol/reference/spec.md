@@ -45,7 +45,14 @@ The key words MUST, MUST NOT, SHOULD, SHOULD NOT, and MAY are used as described 
 
 A Company MUST publish its `poppy.json` document at `https://{domain}/.well-known/poppy.json` over HTTPS, where `{domain}` is the Company's domain or a subdomain it controls.
 
-The well-known URL MAY redirect, for example from `example.com` to `www.example.com`. Personal Agents MUST follow redirects, and every redirect MUST be to an HTTPS URL. The document speaks for the host that serves it after any redirects (see `organization` below), so a Company that uses a provider has the provider serve it on the Company's own domain. Personal Agents SHOULD cache the document according to its HTTP caching headers.
+The well-known URL MAY redirect, for example from `www.example.com` to `example.com`. Personal Agents MUST follow redirects, and every redirect MUST be to an HTTPS URL. Personal Agents SHOULD cache the document according to its HTTP caching headers.
+
+**Which Company a document speaks for.** A `poppy.json` speaks for the host that serves it, after any redirects, so a Company that uses a provider has the provider serve it on the Company's own domain. The document names the Company's OAuth issuer in `auth.issuer`, and the issuer identifies the Company (3.2). The issuer confirms the link from its side by listing, in its metadata, the domains whose documents name it. Before using a document, the Personal Agent checks both directions:
+
+1. `organization.domain` is the host that served the document (3.1). This stops a document copied to another domain from speaking for the Company.
+2. The issuer's metadata has the same `issuer`, and its `poppy_domains` lists `organization.domain` (3.2). This stops a domain from claiming another Company's issuer and receiving its tokens.
+
+**HTTPS.** Every URL this protocol defines or exchanges MUST be an HTTPS URL: in `poppy.json`, in authorization server and protected resource metadata, in client metadata documents (4.1), in extensions, and in assertions, proofs, and responses. Personal Agents MUST NOT use a URL from a Company that has another scheme, and Companies MUST reject one from a Personal Agent. This doesn't cover the pages of a Company's website, which Personal Agents browse as any visitor would (section 5).
 
 An example document:
 
@@ -111,8 +118,8 @@ An example document:
 
 | Field | Req. | Description |
 | --- | --- | --- |
-| `protocol_version` | Yes | The protocol version the document follows, as `major.minor`. This draft is `0.2`. A newer minor version doesn't break older Personal Agents, which use the document and ignore fields they don't recognize. A Personal Agent MUST NOT use a document whose major version it doesn't support. |
-| `organization` | Yes | Display name and domain. `domain` MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, and nothing else. |
+| `protocol_version` | Yes | The protocol version the document follows, as `major.minor`. This draft is `0.2`. Before 1.0, each version can change the protocol in ways that aren't backward compatible, so a Personal Agent MUST NOT use a document whose `major.minor` version it doesn't support. From 1.0, a newer minor version won't break older Personal Agents, which use the document and ignore fields they don't recognize. |
+| `organization` | Yes | Display name and domain. `domain` MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, with no other normalization. |
 | `auth` | If `agent`, `apis`, `feedback`, or `web.browser_session_endpoint` is present | `issuer` is the Company's OAuth issuer identifier, an HTTPS URL. It identifies the Company, and the Personal Agent finds the Company's OAuth endpoints from it (3.2). It also contains `direct`, `device`, and `mediated` for the types of sign-in the Company supports (4.4), if any. With none, it offers only signed-out Sessions. Sessions need `auth`, so a Company without it can only be browsed as an ordinary website (section 5). |
 | `auth.direct` | If supported | `scopes` lists the scopes Direct Sign-In can grant (4.5). |
 | `auth.device` | If supported | `scopes` lists the scopes Device Sign-In can grant (4.6). |
@@ -128,9 +135,9 @@ An example document:
 
 A Company is identified by its `auth.issuer`. Several domains MAY name the same issuer, such as a Company with a domain for each country, and they are then one Company: the same User IDs (4.2), Sessions, and Account Tokens apply to all of them.
 
-An issuer MUST represent exactly one Company. A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers. Otherwise the Companies would be one Company under this protocol: Personal Agents would send each of them the same User IDs, an Account Token from one would be valid at the others, and `poppy_domains` would list all of them.
+An issuer MUST represent exactly one Company. A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers. Otherwise the Companies would be one Company under this protocol: Personal Agents would send each of them the same User IDs, and an Account Token from one would be valid at the others.
 
-The issuer MUST publish OAuth Authorization Server Metadata ([RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)), and `poppy_domains` in it MUST list every domain whose `poppy.json` names the issuer. The metadata is at the URL RFC 8414 (section 3.1) defines, which puts `/.well-known/oauth-authorization-server` between the issuer's host and its path, if it has one, such as `https://auth.provider.example/.well-known/oauth-authorization-server/shop-a`. Before using a Company's `poppy.json`, the Personal Agent fetches the metadata and MUST check that its `issuer` exactly matches `auth.issuer` and that `poppy_domains` includes `organization.domain`, ignoring case. Otherwise any domain could claim another Company's issuer and receive its tokens.
+The issuer MUST publish OAuth Authorization Server Metadata ([RFC 8414](https://www.rfc-editor.org/rfc/rfc8414)), and `poppy_domains` in it MUST list every domain whose `poppy.json` names the issuer. The metadata is at the URL RFC 8414 (section 3.1) defines, which puts `/.well-known/oauth-authorization-server` between the issuer's host and its path, if it has one, such as `https://auth.provider.example/.well-known/oauth-authorization-server/shop-a`. Before using a Company's `poppy.json`, the Personal Agent fetches the metadata and MUST check that its `issuer` exactly matches `auth.issuer`, character for character. It MUST also check that `poppy_domains` includes `organization.domain`, comparing domains ignoring case. Otherwise any domain could claim another Company's issuer and receive its tokens.
 
 *GET https://auth.example.com/.well-known/oauth-authorization-server*
 
@@ -146,11 +153,16 @@ The issuer MUST publish OAuth Authorization Server Metadata ([RFC 8414](https://
 }
 ```
 
-The Personal Agent takes these endpoints from the metadata:
+The Personal Agent uses these fields of the metadata:
+
+- `issuer` and `poppy_domains`, which it checks against `poppy.json` (above). Required.
 
 - `token_endpoint` issues Session and Account Tokens (4.2, 4.8). Required.
+
 - `revocation_endpoint` revokes Account Tokens (4.9). Required.
+
 - `authorization_endpoint` starts Direct Sign-In (4.5). Required if `auth.direct` is present.
+
 - `device_authorization_endpoint` starts Device Sign-In (4.6). Required if `auth.device` is present.
 
 Companies MUST accept DPoP Proofs (4.3) signed with `ES256`, so every Personal Agent has an algorithm that works at every Company. A Company MAY list the algorithms it accepts in `dpop_signing_alg_values_supported`, as [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449) §5.1 defines, and the list MUST then include `ES256`. Personal Agents MUST sign DPoP Proofs with `ES256` or with an algorithm from that list. The field also tells every other OAuth client of the issuer that it supports DPoP, so a Company whose issuer serves other clients, such as MCP clients that use Bearer tokens (section 6), can leave it out.
@@ -1316,7 +1328,7 @@ A model can be led to repeat what is in its context, so a secret in context can 
 
 ### 9.3 What a domain vouches for
 
-A Company's `poppy.json`, served on its own domain (section 3), is where the Personal Agent learns everything about the Company: its issuer, its sign-in types, the Mediated Sign-In endpoint, its APIs, and its Company Agent. Whoever controls that document speaks for the Company at that domain, as whoever controls its website does today. The issuer check in 3.2 protects in the other direction: it stops a domain from claiming another Company's issuer and receiving its tokens. It doesn't make the issuer metadata more trustworthy than `poppy.json`, because the document chooses the issuer.
+A Company's `poppy.json` is where the Personal Agent learns everything about the Company: its issuer, its sign-in types, the Mediated Sign-In endpoint, its APIs, and its Company Agent. Whoever controls that document speaks for the Company at the host that serves it, as whoever controls its website does today. The document's endpoints can be on any host. The checks in section 3 cover both directions of the link between domain and issuer, which stops a domain from claiming another Company's issuer and receiving its tokens. They don't make the issuer metadata more trustworthy than `poppy.json`, because the document chooses the issuer.
 
 ### 9.4 Assertions
 

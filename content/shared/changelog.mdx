@@ -8,6 +8,14 @@ published version stays at its own URL, such as [/docs/0.1/spec](/docs/0.1/spec)
 In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published. Changes marked
 "Breaking" can require an implementation that followed the 0.1 text to change.
 
+- **Breaking: HTTPS everywhere.** Every URL the protocol defines or exchanges is an HTTPS URL,
+  including API and MCP URLs, metadata endpoints, and extension endpoints, which 0.1 didn't cover.
+  Personal Agents don't use other URLs from a Company, and Companies reject them from a Personal
+  Agent. Website pages a Personal Agent browses aren't covered ([3](/docs/spec#discovery)).
+- **Breaking: Versions before 1.0.** Each 0.x version can break the one before, so a Personal Agent
+  uses only a `poppy.json` whose `major.minor` version it supports. 0.1 promised that newer minor
+  versions wouldn't break older Personal Agents, which 0.2 doesn't keep. That promise now starts at
+  1.0 ([3.1](/docs/spec#fields)).
 - **Breaking: Which domain `poppy.json` speaks for.** `organization.domain` is the host that serves
   the document after any redirects, not the host the Personal Agent requested. Domains are compared
   ignoring case only, so a leading `www.` is no longer ignored, and the `poppy_domains` check also
@@ -20,6 +28,11 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   as RFC 8414 defines ([3.2](/docs/spec#oauth-server), [4.2](/docs/spec#starting-sessions),
   [9.4](/docs/spec#assertion-audience)).
   [Issue #3](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/3)
+- **Which Company a document speaks for.** Section 3 now explains in one place how `poppy.json` and
+  the issuer's metadata confirm each other, and 3.2 lists `issuer` and `poppy_domains` among the
+  metadata fields. The issuer is compared exactly and domains ignoring case. The redirect example
+  now matches the example document. The rules themselves don't change ([3](/docs/spec#discovery),
+  [3.2](/docs/spec#oauth-server), [9.3](/docs/spec#trust)).
 - **Breaking: DPoP algorithms.** Companies accept DPoP Proofs signed with `ES256`. They may list the
   algorithms they accept in `dpop_signing_alg_values_supported` in their OAuth metadata, and the
   list then includes `ES256`. A Company whose issuer serves other OAuth clients can leave the field

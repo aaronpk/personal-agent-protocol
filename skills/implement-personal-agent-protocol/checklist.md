@@ -14,6 +14,7 @@ are left out.
 ### Specification: [3. Discovery](https://personalagentprotocol.org/docs/0.2/spec#discovery)
 
 - [ ] **MUST**: A Company MUST publish its `poppy.json` document at `https://{domain}/.well-known/poppy.json` over HTTPS, where `{domain}` is the Company's domain or a subdomain it controls.
+- [ ] **MUST**: Every URL this protocol defines or exchanges MUST be an HTTPS URL: in `poppy.json`, in authorization server and protected resource metadata, in client metadata documents (4.1), in extensions, and in assertions, proofs, and responses.
 
 ### Specification: [3.1 Fields](https://personalagentprotocol.org/docs/0.2/spec#fields)
 

@@ -202,19 +202,12 @@ export function checkPoppyDocument(
             expected: `A string "major.minor", such as "${PROTOCOL_VERSION}"`,
             cause: `Set protocol_version to "${PROTOCOL_VERSION}", the draft this validator checks.`,
         });
-    } else if (match[1] !== PROTOCOL_VERSION.split(".")[0]) {
+    } else if (version !== PROTOCOL_VERSION) {
         r.fail("discovery.protocol-version", {
             exchange: ex,
             got: `protocol_version ${version}`,
-            expected: `Major version 0 (this draft is ${PROTOCOL_VERSION})`,
-            cause: `Personal Agents that support only draft 0.x won't use this document. Use ${PROTOCOL_VERSION} unless you're implementing a later major version on purpose.`,
-        });
-    } else if (Number(match[2]) < Number(PROTOCOL_VERSION.split(".")[1])) {
-        r.warn("discovery.protocol-version", {
-            exchange: ex,
-            got: `protocol_version ${version}`,
             expected: `protocol_version ${PROTOCOL_VERSION}`,
-            cause: `This validator checks draft ${PROTOCOL_VERSION}, and some checks may not apply to an implementation of ${version}. Set protocol_version to "${PROTOCOL_VERSION}" once the implementation follows draft ${PROTOCOL_VERSION}. See https://personalagentprotocol.org/docs/changelog for what changed.`,
+            cause: `Before 1.0, each version can break the one before, so Personal Agents that support only draft ${PROTOCOL_VERSION} won't use this document. This validator checks draft ${PROTOCOL_VERSION}: set protocol_version to "${PROTOCOL_VERSION}" once the implementation follows it. See https://personalagentprotocol.org/docs/changelog for what changed.`,
         });
     } else {
         r.pass("discovery.protocol-version", { summary: `protocol_version ${version}.` });

@@ -111,15 +111,15 @@ export const CATALOG: CheckInfo[] = [
     ),
     foundation(
         "discovery.protocol-version",
-        "protocol_version has a major version this validator supports (0)",
+        "protocol_version is the version this validator checks",
         "spec#fields",
-        "A Personal Agent MUST NOT use a document whose major version it doesn't support.",
+        "a Personal Agent MUST NOT use a document whose major.minor version it doesn't support.",
     ),
     foundation(
         "discovery.domain-matches-host",
         "organization.domain is the host that serves poppy.json, after redirects",
         "spec#fields",
-        "domain MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, and nothing else.",
+        "domain MUST be the host that serves the document, after any redirects. Domains are compared ignoring case, with no other normalization.",
     ),
     foundation(
         "discovery.auth-present",
@@ -151,7 +151,7 @@ export const CATALOG: CheckInfo[] = [
         "metadata.schema",
         "The metadata has the fields section 3.2 requires, in the right forms",
         "spec#oauth-server",
-        "The Personal Agent takes these endpoints from the metadata",
+        "The Personal Agent uses these fields of the metadata",
     ),
     foundation(
         "metadata.issuer-matches",
