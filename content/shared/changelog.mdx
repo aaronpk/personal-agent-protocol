@@ -117,6 +117,13 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   accepted with a valid token can continue. When access is revoked, the Company may stop work in
   progress that uses the account, or let it finish ([4.9](/docs/spec#sign-out)).
   [Issue #15](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/15)
+- **Breaking: After sign-out.** Section 4.9 gathers the rules for a Session that continues signed
+  out after the User signs out or disconnects the Personal Agent. What doesn't need the account
+  carries on. Anything that used it, such as a conversation or an operation, stays as it is, and a
+  signed-out token gets `sign_in_required` on it. A conversation stays open, so the User can sign in
+  again and continue it. The Personal Agent SHOULD NOT sign in to that account again unless the User
+  asks, even when a request gets `sign_in_required` ([4.9](/docs/spec#sign-out),
+  [6](/docs/spec#apis), [7.11](/docs/spec#conversation-sign-in)).
 - **Sessions from plain MCP clients.** A Session started by an MCP client that doesn't implement
   this protocol has no User ID, can't continue signed out, and ends when its sign-in does
   ([6](/docs/spec#apis)).
@@ -153,6 +160,12 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   instructions, and MUST NOT act at one Company, or send it information, because another Company's
   content asked. References move to section 10 ([9](/docs/spec#security),
   [9.1](/docs/spec#untrusted-content)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
+- **`extension_required` in conversations and Operations.** The conversation error table lists
+  `extension_required`. An MCP tool that needs the Operations extension returns an ordinary tool
+  error, since an MCP server can't refuse a single tool call with `extension_required`. The
+  Operations error table lists `rate_limited` and no longer lists `extension_required`
+  ([7.13](/docs/spec#conversation-errors), [Operations 2](/docs/extensions/operations#support),
+  [Operations 9](/docs/extensions/operations#errors)).
 - **Breaking: Operations after sign-out.** An operation proposed in a signed-in Session can be used
   only by a Session that is signed in to the same account at the time of the request, including the
   original one. A signed-out Session of the same Personal Agent and User gets `sign_in_required`
@@ -180,6 +193,9 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   and account tokens by the full `auth.issuer` ([Hosting several
   companies](/docs/guides#company-hosting), [User IDs](/docs/guides#agent-user-ids)).
   [Issue #3](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/3)
+- **Guides: conversations after sign-out.** Companies can leave conversations that used the
+  account open after sign-out, answering signed-out tokens with `sign_in_required`, instead of
+  closing them ([Conversations](/docs/guides#company-conversations)).
 - **Guides: user ID privacy.** Personal agents tell users that companies recognize them across
   signed-out visits and that signing in links those visits to their account. A new list covers
   anonymous browsing: a new user ID and DPoP key for each session, discarded when it ends ([User

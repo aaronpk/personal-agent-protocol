@@ -127,8 +127,10 @@ new signed-in Session with no User ID, which ends when the sign-in is revoked or
 - Account Token lifetime, rotation, and when Account Tokens are revoked (password reset, suspected
   compromise).
 - Whether sign-out ends Sessions or lets them continue signed out.
-- Whether to close conversations that used the account when a Session signs out (the
-  [guides](https://personalagentprotocol.org/docs/guides#company-conversations) recommend it).
+- Whether to close conversations that used the account when a Session signs out, or leave them open
+  and answer signed-out tokens with `sign_in_required`
+  ([4.9](https://personalagentprotocol.org/docs/spec#sign-out),
+  [guides](https://personalagentprotocol.org/docs/guides#company-conversations)).
 - For Mediated Sign-In: attempt limits, when to require a one-time code, and how the User is told.
 
 ## Common mistakes
