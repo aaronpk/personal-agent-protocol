@@ -118,6 +118,14 @@ calls, at any hour. Existing HTTP patterns handle most of this.
 
 ## For personal agents {#agents}
 
+### Finding a company {#agent-discovery}
+
+When the company you reach is on a different domain from the one the user asked for, tell the user
+which company you're dealing with, its `organization.name` and domain, before you sign in or act for
+them. A well-known URL can redirect anywhere ([section 3](/docs/spec#discovery)). A rebrand, such as
+`thefacebook.com` redirecting to `facebook.com`, then costs one line, and a domain that sends you to
+another company can't move the user's task there without them noticing.
+
 ### User IDs {#agent-user-ids}
 
 Each user needs a stable, opaque ID for each company ([4.2](/docs/spec#starting-sessions)). Two ways
@@ -159,7 +167,8 @@ service providers that process it for you.
 
 ### DPoP keys and proofs {#agent-dpop}
 
-- Generate a DPoP key pair for each user at each company ([4.3](/docs/spec#sending-tokens)). Make it
+- Generate a DPoP key pair for each user ID (MUST, [4.3](/docs/spec#sending-tokens)), so each user
+  at each company has its own. Make it
   non-extractable where your platform allows, such as in a key management service or WebCrypto.
 - Never expose private keys to a model or to tools a model can call. Sign on the model's behalf in
   code it can't reach.
@@ -227,7 +236,9 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 - Use PKCE with `code_challenge_method=S256` ([4.5](/docs/spec#direct-sign-in)).
 - For device sign-in ([4.6](/docs/spec#device-sign-in)), show `verification_uri_complete` as a link
   or QR code, and show `user_code` too so the user can confirm it matches. Keep `device_code`
-  private.
+  private. Show the link only if its host is the company's issuer host or one of its
+  `poppy_domains`, or a subdomain of either, and show the company's name and domain with it (MUST,
+  [4.6](/docs/spec#device-sign-in)).
 - Poll no faster than `interval`. On `slow_down`, add 5 seconds to the interval, as [RFC
   8628](https://www.rfc-editor.org/rfc/rfc8628#section-3.5) describes.
 
@@ -235,6 +246,9 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 - Collect the fields in `auth.mediated.fields` in a form that sends them straight to your sign-in
   code, so secret values never pass through the model.
+- Look up stored credentials by the company's `auth.issuer`, and show the company's name and domain
+  on the form and when asking for a code (MUST, [4.7](/docs/spec#mediated-sign-in)). Field labels
+  come from the company and can name anything.
 - Secret fields MUST never be shown back to the user, logged, or sent anywhere other than the
   company's `auth.mediated.endpoint` ([4.7](/docs/spec#mediated-sign-in)).
 - After sign-in, you MUST either discard the credentials or keep them only in a credential store

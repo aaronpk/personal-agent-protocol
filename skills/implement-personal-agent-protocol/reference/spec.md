@@ -54,6 +54,8 @@ The well-known URL MAY redirect, for example from `www.example.com` to `example.
 
 **HTTPS.** Every URL this protocol defines or exchanges MUST be an HTTPS URL: in `poppy.json`, in authorization server and protected resource metadata, in client metadata documents (4.1), in extensions, and in assertions, proofs, and responses. Personal Agents MUST NOT use a URL from a Company that has another scheme, and Companies MUST reject one from a Personal Agent. This doesn't cover the pages of a Company's website, which Personal Agents browse as any visitor would (section 5).
 
+**Redirects and addresses.** Outside discovery, a redirect never carries the protocol's secrets. If the token, revocation, device authorization, or Mediated Sign-In endpoint, an API, or a conversation, feedback, or extension endpoint answers with a redirect, the Personal Agent MUST NOT send a token, DPoP Proof, assertion, or credentials to the new URL. Personal Agents and Companies MUST NOT connect to a loopback, private, or link-local address for a URL the other party gave them, unless they were configured to on purpose. Otherwise a Company could aim Personal Agents at another Company's servers or at internal ones.
+
 An example document:
 
 *poppy.json, published by the Company*
@@ -133,7 +135,7 @@ An example document:
 
 ### 3.2 OAuth server
 
-A Company is identified by its `auth.issuer`. Several domains MAY name the same issuer, such as a Company with a domain for each country, and they are then one Company: the same User IDs (4.2), Sessions, and Account Tokens apply to all of them.
+A Company is identified by its `auth.issuer`. Several domains MAY name the same issuer, such as a Company with a domain for each country, and they are then one Company: the same User IDs (4.2), Sessions, and Account Tokens apply to all of them. Their documents MUST have the same `auth`, which describes the issuer. Other fields MAY differ by domain, such as the APIs or the website, and the Personal Agent uses the document of the domain it is working with.
 
 An issuer MUST represent exactly one Company. A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers. Otherwise the Companies would be one Company under this protocol: Personal Agents would send each of them the same User IDs, and an Account Token from one would be valid at the others.
 
@@ -246,7 +248,8 @@ A Personal Agent's `client_id` MUST be an HTTPS URL that returns its metadata do
 - `redirect_uris` lists where Direct Sign-In may send the User back to (4.5).
 - `extensions` lists the extensions the Personal Agent supports, keyed by name, each with its `version` (3.3). It is optional.
 - The Personal Agent authenticates at the token endpoint with a client assertion signed by a key from `jwks_uri` (`private_key_jwt`, [RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)). The same keys sign its Session assertions (4.2). Its DPoP keys (4.3) are separate and aren't published.
-- The client assertion's `aud` MUST be the Company's `auth.issuer`, as a single string. Companies MUST reject a client assertion with any other `aud`, including their token endpoint URL. This follows [draft-ietf-oauth-rfc7523bis](https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc7523bis/). The endpoints in a Company's metadata aren't checked (3.2), so an `aud` set to an endpoint could name another Company's endpoint, and that Company would accept the assertion.
+- The client assertion's `aud` MUST be the Company's `auth.issuer`, as a single string. Companies MUST reject a client assertion with any other `aud`, compared character for character, including their token endpoint URL. This follows [draft-ietf-oauth-rfc7523bis](https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc7523bis/). The endpoints in a Company's metadata aren't checked (3.2), so an `aud` set to an endpoint could name another Company's endpoint, and that Company would accept the assertion.
+- The client assertion has `iat`, `exp`, and `jti` with the same rules as a Session assertion (4.2).
 
 Companies MAY require Personal Agents to register ahead of time. How registration works is outside this specification. A Company that requires registration rejects an unregistered Personal Agent with the OAuth `invalid_client` error (HTTP 401) when it starts a Session.
 
@@ -291,9 +294,9 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 
 - `iss` is the Personal Agent's `client_id` (4.1).
 - `sub` is the User ID for this Company, described above.
-- `aud` is the Company's `auth.issuer`, as a single string rather than an array, so the assertion can't be used at another Company. As with the client assertion (4.1), the Company MUST reject any other `aud`.
-- `iat` and `exp` are when the assertion was issued and when it expires, in seconds since 1970 (Unix time). The assertion is short-lived: one minute in this example.
-- `jti` is a unique ID for the assertion, with at least 128 random bits. The Company rejects one it has already seen, so a copied assertion can't be used again.
+- `aud` is the Company's `auth.issuer`, as a single string rather than an array, so the assertion can't be used at another Company. As with the client assertion (4.1), the Company MUST reject any other `aud`, compared character for character.
+- `iat` and `exp` are when the assertion was issued and when it expires, in seconds since 1970 (Unix time). `exp` MUST be at most five minutes after `iat`. The assertion is short-lived: one minute in this example.
+- `jti` is a unique ID for the assertion, with at least 128 random bits. The Company MUST reject a `jti` it has already seen from the same `client_id` until the assertion expires, so a copied assertion can't be used again.
 
 The Company verifies both assertions against the Personal Agent's `jwks_uri`, checks that the assertion's `iss` is the authenticated `client_id`, rejects a reused `jti`, and returns a new Session:
 
@@ -372,7 +375,7 @@ DPoP in this protocol is meant to match RFC 9449, and anything this section does
 - MCP servers accept Bearer Session Tokens, and also DPoP ones if they support DPoP. Companies MUST require DPoP everywhere else (below).
 - Companies don't need to support `dpop_jkt` (RFC 9449 §10).
 
-**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent generates a key pair for each User at each Company, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request, including token requests. A proof is a JWT with the public key in its header:
+**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent MUST use a different key pair for each User ID (4.2), so Companies can't link Users by their keys, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request, including token requests. A proof is a JWT with the public key in its header:
 
 *DPoP Proof (JWT header and payload)*
 
@@ -571,7 +574,7 @@ scope=poppy%3Aread%20poppy%3Awrite
 }
 ```
 
-**2. The User signs in and approves.** The Personal Agent shows the User `verification_uri` and `user_code`, or `verification_uri_complete` as a link or QR code. It keeps `device_code` private. The Company's page shows which Personal Agent is asking and the requested scopes, as in Direct Sign-In, and the User approves some or all of them, or declines. Opening the link MUST NOT approve the request by itself.
+**2. The User signs in and approves.** The Personal Agent shows the User `verification_uri` and `user_code`, or `verification_uri_complete` as a link or QR code. It keeps `device_code` private. Before showing them, the Personal Agent MUST check that the link's host is the host of `auth.issuer` or a domain in the issuer's `poppy_domains` (3.2), or a subdomain of either, and MUST show the Company's `organization.name` and domain with them. Otherwise a Company could pass off another Company's sign-in page as its own, and the User would approve a sign-in there for the Company that asked. The Company's page shows which Personal Agent is asking and the requested scopes, as in Direct Sign-In, and the User approves some or all of them, or declines. Opening the link MUST NOT approve the request by itself.
 
 **3. The Personal Agent waits.** Every `interval` seconds, the Personal Agent asks the `token_endpoint` whether the User has finished:
 
@@ -687,7 +690,7 @@ Every status comes with HTTP 200. Once a sign-in is `failed` or `expired`, submi
 | `account_mismatch` | 400 | The Session is, or was, signed in to a different account than the credentials are for (4.4). |
 | `sign_in_not_found` | 404 | The `sign_in_id` is unknown or was started by a different Session. Both return the same error. |
 
-Accepting credentials from a Personal Agent puts more responsibility on the Company than Direct Sign-In does. A Company that offers Mediated Sign-In MUST rate-limit attempts, MUST NOT return credentials in any response, and SHOULD require a one-time code when a sign-in looks unusual. Personal Agents MUST NOT send credentials to any endpoint other than the Company's `auth.mediated.endpoint`. Once it has an Account Token, the Personal Agent doesn't need the credentials to start signed-in Sessions.
+Accepting credentials from a Personal Agent puts more responsibility on the Company than Direct Sign-In does. A Company that offers Mediated Sign-In MUST rate-limit attempts, MUST NOT return credentials in any response, and SHOULD require a one-time code when a sign-in looks unusual. Personal Agents MUST NOT send credentials to any endpoint other than the Company's `auth.mediated.endpoint`. A Personal Agent MUST choose which stored credentials to send by the Company's `auth.issuer`, never by the field labels or the endpoint, and MUST show the Company's `organization.name` and domain whenever it asks the User for credentials or a code. Otherwise a Company could ask for another Company's password, or for a code another Company sent the User. Once it has an Account Token, the Personal Agent doesn't need the credentials to start signed-in Sessions.
 
 After a sign-in ends, as `complete`, `failed`, or `expired`, the Personal Agent MUST either discard the credentials or keep them only in a credential store the User chose, such as a password manager. It MUST NOT keep them anywhere else, including model context and logs. After the User or the Company revokes the Personal Agent's access (4.9), the Personal Agent SHOULD NOT sign in again with stored credentials unless the User asks it to. Otherwise a stored password could undo the User's decision to disconnect it.
 

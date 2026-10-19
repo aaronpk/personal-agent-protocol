@@ -15,6 +15,7 @@ are left out.
 
 - [ ] **MUST**: A Company MUST publish its `poppy.json` document at `https://{domain}/.well-known/poppy.json` over HTTPS, where `{domain}` is the Company's domain or a subdomain it controls.
 - [ ] **MUST**: Every URL this protocol defines or exchanges MUST be an HTTPS URL: in `poppy.json`, in authorization server and protected resource metadata, in client metadata documents (4.1), in extensions, and in assertions, proofs, and responses.
+- [ ] **MUST NOT**: Personal Agents and Companies MUST NOT connect to a loopback, private, or link-local address for a URL the other party gave them, unless they were configured to on purpose.
 
 ### Specification: [3.1 Fields](https://personalagentprotocol.org/docs/0.2/spec#fields)
 
@@ -22,6 +23,7 @@ are left out.
 
 ### Specification: [3.2 OAuth server](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)
 
+- [ ] **MUST**: Their documents MUST have the same `auth`, which describes the issuer.
 - [ ] **MUST**: An issuer MUST represent exactly one Company.
 - [ ] **MUST**: A provider that hosts several Companies MUST give each its own issuer, such as `https://auth.provider.example/shop-a`, even when they share servers.
 - [ ] **MUST**: The issuer MUST publish OAuth Authorization Server Metadata (RFC 8414), and `poppy_domains` in it MUST list every domain whose `poppy.json` names the issuer.
@@ -30,11 +32,12 @@ are left out.
 
 ### Specification: [4.1 Agent identity](https://personalagentprotocol.org/docs/0.2/spec#agent-identity)
 
-- [ ] **MUST**: Companies MUST reject a client assertion with any other `aud`, including their token endpoint URL.
+- [ ] **MUST**: Companies MUST reject a client assertion with any other `aud`, compared character for character, including their token endpoint URL.
 
 ### Specification: [4.2 Starting a Session](https://personalagentprotocol.org/docs/0.2/spec#starting-sessions)
 
-- [ ] **MUST**: As with the client assertion (4.1), the Company MUST reject any other `aud`.
+- [ ] **MUST**: As with the client assertion (4.1), the Company MUST reject any other `aud`, compared character for character.
+- [ ] **MUST**: The Company MUST reject a `jti` it has already seen from the same `client_id` until the assertion expires, so a copied assertion can't be used again.
 - [ ] **MUST**: The Company chooses the value, and it MUST be greater than 0.
 - [ ] **SHOULD**: Session Tokens SHOULD last hours, not days.
 - [ ] **MUST**: If it does, it MUST encrypt the token.

@@ -80,6 +80,10 @@ Personal agents change the shape of web traffic: one user's request can turn int
 
 ## For personal agents
 
+### Finding a company
+
+When the company you reach is on a different domain from the one the user asked for, tell the user which company you're dealing with, its `organization.name` and domain, before you sign in or act for them. A well-known URL can redirect anywhere ([section 3](https://personalagentprotocol.org/docs/0.2/spec#discovery)). A rebrand, such as `thefacebook.com` redirecting to `facebook.com`, then costs one line, and a domain that sends you to another company can't move the user's task there without them noticing.
+
 ### User IDs
 
 Each user needs a stable, opaque ID for each company ([4.2](https://personalagentprotocol.org/docs/0.2/spec#starting-sessions)). Two ways to make one:
@@ -103,7 +107,7 @@ Keep the mapping of each user's IDs across companies confidential (MUST, [4.2](h
 
 ### DPoP keys and proofs
 
-- Generate a DPoP key pair for each user at each company ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). Make it non-extractable where your platform allows, such as in a key management service or WebCrypto.
+- Generate a DPoP key pair for each user ID (MUST, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)), so each user at each company has its own. Make it non-extractable where your platform allows, such as in a key management service or WebCrypto.
 - Never expose private keys to a model or to tools a model can call. Sign on the model's behalf in code it can't reach.
 - Sign proofs in an HTTP client hook that sees the final method and URL. Don't let the client follow redirects with the old proof: each hop needs its own proof, and the `Authorization` header shouldn't follow a redirect to another host.
 - Sign proofs with ES256, which every company accepts ([3.2](https://personalagentprotocol.org/docs/0.2/spec#oauth-server)). Use another algorithm only if the company lists it in `dpop_signing_alg_values_supported`.
@@ -150,12 +154,13 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 - Open the authorization URL in the user's own browser, not in a browser you automate.
 - Make `state` random and single-use. Record which company and session it belongs to, and exchange the code only at that company's `token_endpoint`. Check that the redirect's `iss` matches that company's `auth.issuer` (MUST, [4.5](https://personalagentprotocol.org/docs/0.2/spec#direct-sign-in)).
 - Use PKCE with `code_challenge_method=S256` ([4.5](https://personalagentprotocol.org/docs/0.2/spec#direct-sign-in)).
-- For device sign-in ([4.6](https://personalagentprotocol.org/docs/0.2/spec#device-sign-in)), show `verification_uri_complete` as a link or QR code, and show `user_code` too so the user can confirm it matches. Keep `device_code` private.
+- For device sign-in ([4.6](https://personalagentprotocol.org/docs/0.2/spec#device-sign-in)), show `verification_uri_complete` as a link or QR code, and show `user_code` too so the user can confirm it matches. Keep `device_code` private. Show the link only if its host is the company's issuer host or one of its `poppy_domains`, or a subdomain of either, and show the company's name and domain with it (MUST, [4.6](https://personalagentprotocol.org/docs/0.2/spec#device-sign-in)).
 - Poll no faster than `interval`. On `slow_down`, add 5 seconds to the interval, as [RFC 8628](https://www.rfc-editor.org/rfc/rfc8628#section-3.5) describes.
 
 ### Mediated sign-in
 
 - Collect the fields in `auth.mediated.fields` in a form that sends them straight to your sign-in code, so secret values never pass through the model.
+- Look up stored credentials by the company's `auth.issuer`, and show the company's name and domain on the form and when asking for a code (MUST, [4.7](https://personalagentprotocol.org/docs/0.2/spec#mediated-sign-in)). Field labels come from the company and can name anything.
 - Secret fields MUST never be shown back to the user, logged, or sent anywhere other than the company's `auth.mediated.endpoint` ([4.7](https://personalagentprotocol.org/docs/0.2/spec#mediated-sign-in)).
 - After sign-in, you MUST either discard the credentials or keep them only in a credential store the user chose, such as a password manager ([4.7](https://personalagentprotocol.org/docs/0.2/spec#mediated-sign-in)). If you discard them and the user needs to sign in again later, ask again.
 - After the user disconnects you or the company revokes your access, don't sign in again with stored credentials unless the user asks you to.

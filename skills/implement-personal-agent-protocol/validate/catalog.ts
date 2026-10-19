@@ -257,13 +257,13 @@ export const CATALOG: CheckInfo[] = [
         "session.assertion-replay",
         "Token endpoint rejects a reused Session assertion jti",
         "spec#starting-sessions",
-        "The Company rejects one it has already seen, so a copied assertion can't be used again.",
+        "The Company MUST reject a jti it has already seen from the same client_id until the assertion expires, so a copied assertion can't be used again.",
     ),
     foundation(
         "session.client-assertion-aud",
         "Token endpoint rejects a client assertion whose aud is the token endpoint URL",
         "spec#agent-identity",
-        "Companies MUST reject a client assertion with any other aud, including their token endpoint URL.",
+        "Companies MUST reject a client assertion with any other aud, compared character for character, including their token endpoint URL.",
     ),
     foundation(
         "session.client-assertion-unknown-key",

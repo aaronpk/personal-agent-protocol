@@ -16,6 +16,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   uses only a `poppy.json` whose `major.minor` version it supports. 0.1 promised that newer minor
   versions wouldn't break older Personal Agents, which 0.2 doesn't keep. That promise now starts at
   1.0 ([3.1](/docs/spec#fields)).
+- **Breaking: Redirects and addresses.** Outside discovery, a Personal Agent doesn't send a token,
+  DPoP Proof, assertion, or credentials to the URL a protocol endpoint redirects to. Neither side
+  connects to loopback, private, or link-local addresses for URLs the other gave it, unless
+  configured to ([3](/docs/spec#discovery)).
 - **Breaking: Which domain `poppy.json` speaks for.** `organization.domain` is the host that serves
   the document after any redirects, not the host the Personal Agent requested. Domains are compared
   ignoring case only, so a leading `www.` is no longer ignored, and the `poppy_domains` check also
@@ -33,6 +37,8 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   metadata fields. The issuer is compared exactly and domains ignoring case. The redirect example
   now matches the example document. The rules themselves don't change ([3](/docs/spec#discovery),
   [3.2](/docs/spec#oauth-server), [9.3](/docs/spec#trust)).
+- **Breaking: One `auth` per issuer.** Documents on several domains that name the same issuer have
+  the same `auth`. Other fields can differ by domain ([3.2](/docs/spec#oauth-server)).
 - **Breaking: DPoP algorithms.** Companies accept DPoP Proofs signed with `ES256`. They may list the
   algorithms they accept in `dpop_signing_alg_values_supported` in their OAuth metadata, and the
   list then includes `ES256`. A Company whose issuer serves other OAuth clients can leave the field
@@ -54,6 +60,12 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   and no sharing it with third parties, other than service providers that process it for them
   ([4.2](/docs/spec#starting-sessions)).
   [Issue #11](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/11)
+- **Breaking: Assertion lifetimes and replay.** A Session assertion's `exp` is at most five minutes
+  after `iat`, and Companies reject a reused `jti` from the same `client_id` until it expires.
+  Client assertions follow the same rules, and `aud` is compared character for character
+  ([4.1](/docs/spec#agent-identity), [4.2](/docs/spec#starting-sessions)).
+- **Breaking: A DPoP key per User ID.** Personal Agents use a different DPoP key pair for each User
+  ID, so Companies can't link Users by their keys ([4.3](/docs/spec#sending-tokens)).
 - **Breaking: DPoP Proof checks.** Companies MUST validate every proof as RFC 9449 §4.3 describes.
   That adds checks that the request has exactly one `DPoP` header, `typ` is `dpop+jwt`, `alg` is an
   asymmetric algorithm the Company accepts and never `none`, and `jwk` holds no private key. In 0.1,
@@ -78,6 +90,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   every sign-in type, and to using an Account Token with a signed-out Session
   ([4.4](/docs/spec#sign-in), [4.8](/docs/spec#account-tokens), [4.9](/docs/spec#sign-out)).
   [Issue #8](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/8)
+- **Breaking: Device sign-in links.** Personal Agents show `verification_uri` only if its host is
+  the Company's issuer host or one of its `poppy_domains`, and show the Company's name and domain
+  with it, so a Company can't pass off another Company's sign-in page as its own
+  ([4.6](/docs/spec#device-sign-in)).
 - **Breaking: Mediated Sign-In responses.** Every status comes with HTTP 200, and submitting a code
   to a `failed` or `expired` sign-in returns the same status again. Problems with the request are
   errors with a JSON body: `invalid_scope` and `account_mismatch` (400), and `sign_in_not_found`
@@ -88,6 +104,9 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   They MUST NOT keep them anywhere else, including model context and logs. After the User or the
   Company revokes their access, they SHOULD NOT sign in again with stored credentials unless the
   User asks ([4.7](/docs/spec#mediated-sign-in)). [Issue #5](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/5)
+- **Breaking: Mediated Sign-In for the right Company.** Personal Agents choose stored credentials by
+  the Company's `auth.issuer`, not by field labels or the endpoint, and show the Company's name and
+  domain when asking for credentials or a code ([4.7](/docs/spec#mediated-sign-in)).
 - **Work after a token expires.** A Session Token expiring isn't a sign-out, and work the Company
   accepted with a valid token can continue. When access is revoked, the Company may stop work in
   progress that uses the account, or let it finish ([4.9](/docs/spec#sign-out)).
@@ -156,6 +175,9 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   anonymous browsing: a new user ID and DPoP key for each session, discarded when it ends ([User
   IDs](/docs/guides#agent-user-ids)).
   [Issue #11](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/11)
+- **Guides: finding a company.** When the company a personal agent reaches is on a different domain
+  from the one the user asked for, it tells the user which company it's dealing with before signing
+  in or acting for them ([Finding a company](/docs/guides#agent-discovery)).
 
 ## Version 0.1 {#v0-1}
 
