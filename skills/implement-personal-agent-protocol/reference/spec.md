@@ -375,7 +375,7 @@ DPoP in this protocol is meant to match RFC 9449, and anything this section does
 - An MCP server that doesn't support DPoP uses Bearer Session Tokens, each for that server only. Companies MUST require DPoP everywhere else (below).
 - Companies don't need to support `dpop_jkt` (RFC 9449 §10).
 
-**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent MUST use a different key pair for each User ID (4.2), so Companies can't link Users by their keys, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request, including token requests. The only exception is a Bearer token for an MCP server (below). A proof is a JWT with the public key in its header:
+**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent MUST use a different key pair for each User ID (4.2), so Companies can't link Users by their keys, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request to the token endpoint and every request that carries a Session Token. The only exception is a request for a Bearer token for an MCP server (below). Requests that carry neither, such as revocation (4.9) and device authorization (4.6), don't need a proof. A proof is a JWT with the public key in its header:
 
 *DPoP Proof (JWT header and payload)*
 
@@ -387,7 +387,7 @@ DPoP in this protocol is meant to match RFC 9449, and anything this section does
 }
 .
 {
-  "jti": "e1j3V_bKic8-LAEB",
+  "jti": "e1j3V_bKic8-LAEBq7Rw2g",
   "htm": "POST",
   "htu": "https://api.example.com/orders/ord_7Hk2/exchanges",
   "iat": 1790900000,
@@ -870,6 +870,7 @@ POST https://api.example.com/orders/ord_7Hk2/exchanges
 Authorization: DPoP eyJhbGciOi…Qp4w
 DPoP: eyJ0eXAiOiJkcG9wK2p3dCIs…
 Content-Type: application/json
+Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 { "item_id": "itm_4Qa", "replacement_sku": "stormline-insulated-m" }
 ```
@@ -984,6 +985,13 @@ Content-Type: application/json
 
 ```
 POST https://api.example.com/poppy/conversations/cnv_8f3Kd2/messages?cursor=evt_c2&wait=10
+Authorization: DPoP eyJhbGciOi…Qp4w
+DPoP: eyJ0eXAiOiJkcG9wK2p3dCIs…
+Content-Type: application/json
+
+{
+  "message": { "id": "msg_Tb5nRw8Ke2Lp0VsD", "sender": "agent", "text": "Medium, please." }
+}
 ```
 
 ### 7.4 Message fields
@@ -1362,7 +1370,7 @@ A Company's `poppy.json` is where the Personal Agent learns everything about the
 
 ### 9.4 Assertions
 
-A Personal Agent works with many Companies it has no prior relationship with, and each Company's metadata names its own endpoints, which nobody checks (3.2). A malicious Company could name another Company's token endpoint in its metadata. If assertions were addressed to that endpoint, the malicious Company could collect them at its other endpoints and replay them at the other Company. That is why every assertion names the Company's `auth.issuer` in `aud` (4.1, 4.2). The issuer is the value the Personal Agent verified for that Company, so an assertion collected by one Company is rejected by every other. Each Company has its own issuer (3.2), so this holds even for Companies a provider hosts on shared servers.
+A Personal Agent works with many Companies it has no prior relationship with, and each Company's metadata names its own endpoints, which nobody checks (3.2). A malicious Company could name another Company's token endpoint in its metadata. If assertions were addressed to that endpoint, the malicious Company could collect them at its other endpoints and replay them at the other Company. That is why client and Session assertions name the Company's `auth.issuer` in `aud` (4.1, 4.2). The issuer is the value the Personal Agent verified for that Company, so an assertion collected by one Company is rejected by every other. Each Company has its own issuer (3.2), so this holds even for Companies a provider hosts on shared servers. A browser assertion names the Company's `web.browser_session_endpoint` instead, and has its own `typ`, so no token endpoint accepts it (section 5).
 
 ## 10. References
 

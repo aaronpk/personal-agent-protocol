@@ -76,6 +76,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: DPoP errors at APIs and conversations.** `invalid_dpop_proof` and `use_dpop_nonce`
   come with HTTP 401 and the `WWW-Authenticate: DPoP` header. At the token endpoint they're OAuth
   errors with HTTP 400 ([4.3](/docs/spec#sending-tokens), [6](/docs/spec#apis)).
+- **Which requests carry a DPoP Proof.** Every request to the token endpoint and every request with
+  a Session Token carries a proof, except a request for a Bearer token for an MCP server. Requests
+  that carry neither, such as revocation and device authorization, don't need one
+  ([4.3](/docs/spec#sending-tokens)).
 - **Breaking: DPoP at MCP servers.** An MCP server supports DPoP by listing
   `dpop_signing_alg_values_supported`, with `ES256`, in its protected resource metadata. The Company
   chooses the token type by the `resource` of the token request: a DPoP Session Token for such a
@@ -160,6 +164,9 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   instructions, and MUST NOT act at one Company, or send it information, because another Company's
   content asked. References move to section 10 ([9](/docs/spec#security),
   [9.1](/docs/spec#untrusted-content)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
+- **Browser assertion audience.** Section 9.4 now says that client and Session assertions name the
+  issuer, and that a browser assertion names the browser session endpoint and has its own `typ`
+  ([9.4](/docs/spec#assertion-audience)).
 - **`extension_required` in conversations and Operations.** The conversation error table lists
   `extension_required`. An MCP tool that needs the Operations extension returns an ordinary tool
   error, since an MCP server can't refuse a single tool call with `extension_required`. The
@@ -173,6 +180,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Operations.** Personal Agents should show the User the values in an operation's `terms` next to
   its `summary`, or check that they agree, before asking for approval ([Operations
   5.1](/docs/extensions/operations#approval)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
+- **Examples.** The request that waits for a reply is shown in full, the API write examples include
+  an `Idempotency-Key`, the example DPoP Proof's `jti` has 128 random bits, and the Operations
+  conversation example has its own event ID ([7.3](/docs/spec#sending-messages),
+  [Operations 4.3](/docs/extensions/operations#binding-conversations)).
 - **Guides.** Sign DPoP Proofs with ES256, which every company accepts. A company's token endpoint keeps
   a replay cache shared by every server, and its APIs may keep one too. A client or Session
   assertion's `aud` is the company's `auth.issuer`. Personal agents keep Mediated Sign-In
@@ -204,6 +215,11 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Guides: finding a company.** When the company a personal agent reaches is on a different domain
   from the one the user asked for, it tells the user which company it's dealing with before signing
   in or acting for them ([Finding a company](/docs/guides#agent-discovery)).
+- **Guides: matching the spec.** Personal agents sign assertions and proofs with ES256, and don't
+  send a token or proof to the URL a protocol endpoint redirects to. Mediated Sign-In credentials
+  are discarded or stored when a sign-in ends. Without a browser session endpoint, personal agents
+  browse only as signed-out visitors. The token endpoint's replay rule and `iss` in Direct Sign-In
+  redirects cite the spec without overstating it ([Guides](/docs/guides)).
 
 ## Version 0.1 {#v0-1}
 

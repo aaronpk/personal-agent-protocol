@@ -73,7 +73,7 @@ To handle them:
 
 Assertions and DPoP proofs are JWTs. To sign and verify them consistently:
 
-- [ ] Support ES256 and RS256, and sign with ES256 when you can. Use RSA keys of at least 2048 bits.
+- [ ] Personal agents: sign assertions and DPoP proofs with ES256. Every company accepts it in proofs (MUST, 3.2). Companies: accept ES256 and RS256 in assertions. Use RSA keys of at least 2048 bits.
 - [ ] Reject `alg: none` and symmetric algorithms such as HS256.
 - [ ] Verify assertions only with keys from the personal agent's verified `jwks_uri` (4.1). Ignore `jku`, `x5u`, and any key embedded in an assertion. DPoP proofs are the one exception: the public key in their `jwk` header is how they work (4.3).
 - [ ] Check `aud`, `exp`, and `iat`. A client assertion or Session assertion has the company's `auth.issuer` as its `aud`, never an endpoint URL (4.1). Allow a small clock skew, such as 30 seconds, and reject assertions that claim a long lifetime.
@@ -123,7 +123,7 @@ Personal agents fetch `poppy.json` files and API descriptions. Companies fetch c
 Section 4.3 lists the checks you MUST make on every proof. To make them reliably:
 
 - [ ] Check that `typ` is `dpop+jwt`, that `alg` is ES256 or one you list in `dpop_signing_alg_values_supported` (3.2), and that `jwk` holds only a public key.
-- [ ] Keep a replay cache keyed by `jti`, holding entries for the acceptance window. Your token endpoint MUST have one, shared by every server behind it. Your APIs and conversation endpoint can have one too, ideally shared the same way. Otherwise a proof accepted by one server can be replayed at another.
+- [ ] Keep a replay cache keyed by `jti`, holding entries for the acceptance window. Your token endpoint MUST reject a reused `jti` (4.3), so share its cache across every server behind it. Your APIs and conversation endpoint can have one too, ideally shared the same way. Otherwise a proof accepted by one server can be replayed at another.
 - [ ] Behind proxies and load balancers, compare `htu` with the public URL the personal agent used. Build it from your configured public origin, not from the `Host` header your server receives.
 - [ ] Use an acceptance window of about one minute, plus a small clock skew.
 - [ ] Require nonces if you want proofs that can't be made in advance. A nonce stays valid for a while, so it doesn't stop a proof being replayed. It doesn't replace the replay cache.
@@ -209,7 +209,7 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 
 ### Recommended: [Browser sessions](https://personalagentprotocol.org/docs/0.2/guides#company-browsing)
 
-- [ ] Offer `web.browser_session_endpoint` if you want signed-in personal agents to use your website. Without it, they can only browse signed out, or ask users to sign in to your website themselves.
+- [ ] Offer `web.browser_session_endpoint` if you want signed-in personal agents to use your website. Without it, they browse your website only as ordinary signed-out visitors (section 5), and use your APIs and conversations for anything that needs the account.
 - [ ] Don't log request bodies at the endpoint. They contain browser assertions.
 - [ ] Limit the cookie to the hosts personal agents need, such as your main site, rather than your whole domain.
 - [ ] Look up the session on each request, so sign-out and scope changes take effect on the website right away.
@@ -277,7 +277,7 @@ The page where the user approves access, in direct and device sign-in (4.5, 4.6)
 - [ ] Protect the page against cross-site request forgery, and against framing by other sites with `Content-Security-Policy: frame-ancestors`.
 - [ ] `redirect_uri` MUST exactly match an entry in the personal agent's `redirect_uris` (4.5).
 - [ ] Accept PKCE with `S256` only, and reject `plain`.
-- [ ] Return `iss` in every redirect, success or error (MUST, 4.5).
+- [ ] Return `iss` in every redirect, success or error (4.5). Personal agents reject a redirect without it.
 - [ ] For extra protection, support Pushed Authorization Requests (RFC 9126).
 
 ### Recommended: [Device sign-in](https://personalagentprotocol.org/docs/0.2/guides#company-device)

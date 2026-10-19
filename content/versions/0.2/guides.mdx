@@ -37,7 +37,9 @@ To handle them:
 
 Assertions and DPoP proofs are JWTs. To sign and verify them consistently:
 
-- Support ES256 and RS256, and sign with ES256 when you can. Use RSA keys of at least 2048 bits.
+- Personal agents: sign assertions and DPoP proofs with ES256. Every company accepts it in proofs
+  (MUST, [3.2](/docs/spec#oauth-server)). Companies: accept ES256 and RS256 in assertions. Use RSA
+  keys of at least 2048 bits.
 - Reject `alg: none` and symmetric algorithms such as HS256.
 - Verify assertions only with keys from the personal agent's verified `jwks_uri`
   ([4.1](/docs/spec#agent-identity)). Ignore `jku`, `x5u`, and any key embedded in an assertion.
@@ -168,13 +170,13 @@ service providers that process it for you.
 ### DPoP keys and proofs {#agent-dpop}
 
 - Generate a DPoP key pair for each user ID (MUST, [4.3](/docs/spec#sending-tokens)), so each user
-  at each company has its own. Make it
-  non-extractable where your platform allows, such as in a key management service or WebCrypto.
+  at each company has its own. Make it non-extractable where your platform allows, such as in a key
+  management service or WebCrypto.
 - Never expose private keys to a model or to tools a model can call. Sign on the model's behalf in
   code it can't reach.
 - Sign proofs in an HTTP client hook that sees the final method and URL. Don't let the client follow
-  redirects with the old proof: each hop needs its own proof, and the `Authorization` header
-  shouldn't follow a redirect to another host.
+  redirects from protocol endpoints with the token or proof: you MUST NOT send either to the new URL
+  ([section 3](/docs/spec#discovery)).
 - Sign proofs with ES256, which every company accepts ([3.2](/docs/spec#oauth-server)). Use
   another algorithm only if the company lists it in `dpop_signing_alg_values_supported`.
 - Personal agents MUST support nonces ([4.3](/docs/spec#sending-tokens)). On `use_dpop_nonce`, take
@@ -252,9 +254,9 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
   come from the company and can name anything.
 - Secret fields MUST never be shown back to the user, logged, or sent anywhere other than the
   company's `auth.mediated.endpoint` ([4.7](/docs/spec#mediated-sign-in)).
-- After sign-in, you MUST either discard the credentials or keep them only in a credential store
-  the user chose, such as a password manager ([4.7](/docs/spec#mediated-sign-in)). If you discard
-  them and the user needs to sign in again later, ask again.
+- After a sign-in ends, you MUST either discard the credentials or keep them only in a credential
+  store the user chose, such as a password manager ([4.7](/docs/spec#mediated-sign-in)). If you
+  discard them and the user needs to sign in again later, ask again.
 - After the user disconnects you or the company revokes your access, don't sign in again with
   stored credentials unless the user asks you to.
 - When the company asks for a one-time code, ask the user for it and submit only the code.
@@ -316,9 +318,9 @@ reliably:
   `dpop_signing_alg_values_supported` ([3.2](/docs/spec#oauth-server)), and that `jwk` holds only a
   public key.
 - Keep a replay cache keyed by `jti`, holding entries for the acceptance window. Your token endpoint
-  MUST have one, shared by every server behind it. Your APIs and conversation endpoint can have one
-  too, ideally shared the same way. Otherwise a proof accepted by one server can be replayed at
-  another.
+  MUST reject a reused `jti` ([4.3](/docs/spec#sending-tokens)), so share its cache across every
+  server behind it. Your APIs and conversation endpoint can have one too, ideally shared the same
+  way. Otherwise a proof accepted by one server can be replayed at another.
 - Behind proxies and load balancers, compare `htu` with the public URL the personal agent used.
   Build it from your configured public origin, not from the `Host` header your server receives.
 - Use an acceptance window of about one minute, plus a small clock skew.
@@ -368,7 +370,8 @@ The page where the user approves access, in direct and device sign-in
 - `redirect_uri` MUST exactly match an entry in the personal agent's `redirect_uris`
   ([4.5](/docs/spec#direct-sign-in)).
 - Accept PKCE with `S256` only, and reject `plain`.
-- Return `iss` in every redirect, success or error (MUST, [4.5](/docs/spec#direct-sign-in)).
+- Return `iss` in every redirect, success or error ([4.5](/docs/spec#direct-sign-in)). Personal
+  agents reject a redirect without it.
 - For extra protection, support Pushed Authorization Requests ([RFC
   9126](https://www.rfc-editor.org/rfc/rfc9126)).
 
@@ -404,7 +407,9 @@ MUST NOT return credentials in any response. Also:
 ### Browser sessions {#company-browsing}
 
 - Offer `web.browser_session_endpoint` if you want signed-in personal agents to use your website.
-  Without it, they can only browse signed out, or ask users to sign in to your website themselves.
+  Without it, they browse your website only as ordinary signed-out visitors
+  ([section 5](/docs/spec#web-browsing)), and use your APIs and conversations for anything that
+  needs the account.
 - Don't log request bodies at the endpoint. They contain browser assertions.
 - Limit the cookie to the hosts personal agents need, such as your main site, rather than your whole
   domain.

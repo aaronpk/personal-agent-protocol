@@ -125,6 +125,7 @@ POST https://api.example.com/orders/ord_7Hk2/exchanges
 Authorization: DPoP eyJhbGciOi…Qp4w
 DPoP: eyJ0eXAiOiJkcG9wK2p3dCIs…
 Content-Type: application/json
+Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 { "item_id": "itm_4Qa", "replacement_sku": "stormline-insulated-m" }
 ```
@@ -173,7 +174,7 @@ A Company message carries the operation in `operation`, next to `text` and `data
 
 ```
 {
-  "id": "evt_c2",
+  "id": "evt_k4",
   "type": "message",
   "created_at": "2026-10-08T19:03:00Z",
   "message": {

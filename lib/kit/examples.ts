@@ -41,6 +41,7 @@ const EXAMPLES: Record<string, Target> = {
     "sending-messages:1": "conversation-request.schema.json",
     "sending-messages:2": "conversation-response.schema.json",
     "sending-messages:3": "conversation-request.schema.json",
+    "sending-messages:4": "conversation-request.schema.json",
     "message-fields:1": "message.schema.json",
     "message-fields:2": "message.schema.json",
     "reading-events:1": "events-response.schema.json",
