@@ -2925,6 +2925,181 @@ footer.site-footer .footer-github {
     }
 }
 
+/* ---------- Video tutorials ---------- */
+
+.doc .video-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 40px 28px;
+    margin-top: 32px;
+}
+
+.doc .video-card h2 {
+    font-size: 18px;
+    line-height: 1.35;
+    margin: 14px 0 6px;
+    padding: 0;
+    border: none;
+}
+
+.doc .video-card p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    margin: 0;
+}
+
+.video-thumb {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-sunk);
+    cursor: pointer;
+}
+
+.video-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* In a corner, since the thumbnails have the video's title in the middle. */
+.video-play {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding-left: 2px;
+    border-radius: 50%;
+    background: rgba(17, 17, 16, 0.72);
+    color: #fff;
+    transition: background 0.2s ease;
+}
+
+.video-length {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: rgba(17, 17, 16, 0.78);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .video-thumb:hover img {
+        transform: scale(1.03);
+    }
+}
+
+@media (hover: hover) {
+    .video-thumb:hover .video-play {
+        background: var(--accent);
+    }
+}
+
+.video-thumb:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* The lightbox fills the screen, so a click on it outside the video is a click on the dialog. */
+.video-lightbox {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: hidden;
+}
+
+.video-lightbox[open] {
+    display: grid;
+    place-items: center;
+}
+
+.video-lightbox::backdrop {
+    background: rgba(17, 17, 16, 0.82);
+}
+
+/* As large as fits, leaving room for the close button, at 16:9. */
+.video-lightbox-frame {
+    width: min(1200px, calc(100vw - 48px), calc((100dvh - 128px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: center / cover no-repeat #000;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+
+.video-lightbox-frame wistia-player {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.video-lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    cursor: pointer;
+}
+
+.video-lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+.video-lightbox-close:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+html:has(.video-lightbox[open]) {
+    overflow: hidden;
+}
+
+::view-transition-group(*) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (max-width: 640px) {
+    .doc .video-gallery {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .video-lightbox-frame {
+        width: 100vw;
+        border-radius: 0;
+    }
+}
+
 @media print {
     * {
         -webkit-print-color-adjust: exact;

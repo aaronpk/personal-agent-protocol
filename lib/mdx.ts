@@ -1,6 +1,6 @@
 import { createProcessor } from "@mdx-js/mdx";
 import type { Element, ElementContent, Root as HastRoot, RootContent, Text } from "hast";
-import type { Heading, Nodes, Root } from "mdast";
+import type { Heading, Nodes, Root, RootContent as MdastContent } from "mdast";
 import remarkGfm from "remark-gfm";
 import type { OutlineSection } from "./docs-outline";
 
@@ -113,6 +113,15 @@ export function parseMdx(source: string, resolve?: (url: string) => string): Roo
     return tree;
 }
 
+// Blocks in order, including the blocks inside components, such as a <Video>'s heading.
+export function flowContent(nodes: MdastContent[]): MdastContent[] {
+    return nodes.flatMap((node) =>
+        (node.type as string) === "mdxJsxFlowElement" && "children" in node
+            ? flowContent(node.children as MdastContent[])
+            : [node],
+    );
+}
+
 // The outline of a page: its headings with ids, down to `depth`, with ### headings nested under
 // the ## heading before them. A label is the heading's text unless `labels` gives another.
 export function outlineOf(
@@ -123,7 +132,7 @@ export function outlineOf(
 ): OutlineSection[] {
     const sections: OutlineSection[] = [];
     const ids = new Set<string>();
-    for (const node of tree.children) {
+    for (const node of flowContent(tree.children)) {
         if (node.type !== "heading") {
             continue;
         }

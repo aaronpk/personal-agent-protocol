@@ -1,7 +1,7 @@
 import type { Code, Nodes, Root } from "mdast";
 import { DOCS_PAGES, type DocsPage } from "../../content/docs";
 import { pageSource } from "../docs-content";
-import { headingId, textOf } from "../mdx";
+import { flowContent, headingId, textOf } from "../mdx";
 
 export { headingIds } from "../docs-content";
 
@@ -20,11 +20,11 @@ export function pageByName(name: string): DocsPage | undefined {
 
 type Block = { node: Nodes; section: string | undefined };
 
-// The page's top-level blocks, in order, each with the id of the nearest heading before it that
+// The page's blocks, in order, including those inside components, each with the id of the nearest heading before it that
 // has one. A block inside a list or table keeps the section of the list or table.
 function blocks(tree: Root): Block[] {
     let section: string | undefined;
-    return tree.children.map((node) => {
+    return flowContent(tree.children).map((node) => {
         if (node.type === "heading") {
             section = headingId(node) ?? section;
         }

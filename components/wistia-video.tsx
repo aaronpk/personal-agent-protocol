@@ -6,7 +6,7 @@ declare module "react" {
             "wistia-player": React.DetailedHTMLProps<
                 React.HTMLAttributes<HTMLElement>,
                 HTMLElement
-            > & { "media-id": string; aspect?: string };
+            > & { "media-id": string; aspect?: string; autoplay?: string };
         }
     }
 }
@@ -19,7 +19,7 @@ const PRIVACY_MODE =
 
 // A Wistia video. Until Wistia's scripts define the player, globals.css shows a blurred thumbnail
 // in its place.
-export function WistiaVideo({ mediaId }: { mediaId: string }) {
+export function WistiaVideo({ mediaId, autoplay }: { mediaId: string; autoplay?: boolean }) {
     return (
         <>
             <Script id="wistia-privacy-mode" strategy="afterInteractive">
@@ -34,6 +34,7 @@ export function WistiaVideo({ mediaId }: { mediaId: string }) {
             <wistia-player
                 media-id={mediaId}
                 aspect="1.7777777777777777"
+                autoplay={autoplay ? "" : undefined}
                 style={
                     {
                         "--swatch": `url('https://fast.wistia.com/embed/medias/${mediaId}/swatch')`,

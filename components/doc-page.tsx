@@ -14,6 +14,7 @@ import { CommentingButton } from "./feedback-actions";
 import { PronounceButton } from "./pronounce-button";
 import { SpecTable } from "./spec-table";
 import { VersionMenu } from "./version-menu";
+import { Video, VideoGallery } from "./video-gallery";
 
 // A list of partner names, shown in columns.
 function PartnerList({ children }: { children?: ReactNode }) {
@@ -65,6 +66,8 @@ const COMPONENTS: MDXComponents = {
     IssueLink,
     PartnerList,
     PronounceButton,
+    Video,
+    VideoGallery,
 };
 
 // A docs page: the outline of its tab, and its content, compiled from MDX at build time.

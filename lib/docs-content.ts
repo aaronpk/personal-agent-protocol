@@ -12,7 +12,7 @@ import {
     type DocsPage,
 } from "../content/docs";
 import type { OutlinePage } from "./docs-outline";
-import { headingId, linksOf, outlineOf, parseMdx } from "./mdx";
+import { flowContent, headingId, linksOf, outlineOf, parseMdx } from "./mdx";
 import { mdxToMarkdown } from "./mdx-markdown";
 
 // Reads the docs content at build time: each page's MDX, its outline, and its Markdown version.
@@ -102,7 +102,7 @@ export function linkProblems(): string[] {
 // Every heading id on a page, at any depth.
 export function headingIds(page: DocsPage): Set<string> {
     const ids = new Set<string>();
-    for (const node of pageSource(page).tree.children) {
+    for (const node of flowContent(pageSource(page).tree.children)) {
         const id = node.type === "heading" ? headingId(node) : undefined;
         if (id) {
             ids.add(id);

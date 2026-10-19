@@ -29,6 +29,8 @@ export type DocsPage = {
     outlineLabels?: Record<string, string>;
     // In a published version, the content file's SHA-256. The build fails if the file changes.
     sha256?: string;
+    // false for a page the kit leaves out of its reference/ folder, such as the videos.
+    kit?: false;
 };
 
 export type DocsTab = {
@@ -130,6 +132,20 @@ const TABS: TabInfo[] = [
                 description:
                     "Recommended practices for companies and personal agents implementing Personal Agent Protocol.",
                 outlineDepth: 2,
+            },
+        ],
+    },
+    {
+        title: "Videos",
+        pages: [
+            {
+                slug: "videos",
+                navTitle: "Videos",
+                title: "Personal Agent Protocol: Video tutorials",
+                description:
+                    "Short videos on what Personal Agent Protocol is, how a personal agent connects to a company, how users sign in, and how agents talk to company agents.",
+                outlineDepth: 2,
+                kit: false,
             },
         ],
     },

@@ -34,7 +34,7 @@ function filesUnder(dir: string): string[] {
 
 // The docs as Markdown, with links to the site made absolute, since the files are read offline.
 function referenceFiles(): KitFile[] {
-    return DOCS_PAGES.map((page) => ({
+    return DOCS_PAGES.filter((page) => page.kit !== false).map((page) => ({
         path: `reference/${pageName(page)}.md`,
         content: pageMarkdown(page.href).replace(/\]\(\//g, `](${SITE_URL}/`),
     }));

@@ -2,6 +2,7 @@ import type { Nodes, PhrasingContent, Root, RootContent } from "mdast";
 import remarkGfm from "remark-gfm";
 import remarkStringify from "remark-stringify";
 import { unified } from "unified";
+import { headingId } from "./mdx";
 import { NEW_ISSUE_URL, SITE_URL } from "./site";
 
 // Writes a docs page's MDX as plain Markdown, such as /docs/spec.md: components become Markdown
@@ -37,6 +38,23 @@ function lower(node: RootContent): RootContent[] {
                     children: phrasing(jsx.children.flatMap(lower)) as PhrasingContent[],
                 },
             ];
+        }
+        if (jsx.name === "Video") {
+            // The video's heading and description, then a link to watch it on the site.
+            const children = jsx.children.flatMap(lower);
+            const heading = children.find((c) => c.type === "heading");
+            const id = heading?.type === "heading" ? headingId(heading) : undefined;
+            if (!id) {
+                throw new Error("A <Video> needs a heading with an id");
+            }
+            const url = `${SITE_URL}/docs/videos#${id}`;
+            const link: RootContent = {
+                type: "paragraph",
+                children: [
+                    { type: "link", url, children: [{ type: "text", value: "Watch the video" }] },
+                ],
+            };
+            return [...children, link];
         }
         return jsx.children.flatMap(lower);
     }
