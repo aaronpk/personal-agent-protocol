@@ -147,6 +147,27 @@ test("a Bearer MCP token accepted elsewhere fails", async () => {
     assert.equal(byId("mcp.bearer-elsewhere-rejected").status, "fail");
 });
 
+test("an MCP server without DPoP that gets a DPoP token for a request with a proof fails", async () => {
+    const { byId } = await run({ dpopAtBearerMcp: true }, "interfaces", ["mcp."]);
+    assert.equal(byId("mcp.bearer-token").status, "fail");
+    assert.equal(byId("mcp.dpop-server-token").status, "skip");
+});
+
+test("an MCP server with DPoP uses DPoP Session Tokens", async () => {
+    const { byId } = await run({ mcpDpop: true }, "interfaces", ["mcp."]);
+    assert.equal(byId("mcp.dpop-server-token").status, "pass");
+    assert.equal(byId("mcp.dpop-server-no-bearer").status, "pass");
+    assert.equal(byId("mcp.dpop-server-accepted").status, "pass");
+    assert.equal(byId("mcp.dpop-token-rejected").status, "pass");
+    assert.equal(byId("mcp.bearer-token").status, "skip");
+});
+
+test("a Bearer token for an MCP server with DPoP fails", async () => {
+    const { byId } = await run({ mcpDpop: true, bearerAtDpopMcp: true }, "interfaces", ["mcp."]);
+    assert.equal(byId("mcp.dpop-server-token").status, "pass");
+    assert.equal(byId("mcp.dpop-server-no-bearer").status, "fail");
+});
+
 test("a retried first message that starts a new conversation fails", async () => {
     const { byId } = await run({ retryCreatesNewConversation: true }, "interfaces", [
         "conversations.",

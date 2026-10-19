@@ -199,7 +199,7 @@ export async function checkResources(ctx: Context, r: Recorder): Promise<void> {
             "dpop.bearer-scheme",
             probe,
             ex,
-            "The endpoint accepts Session Tokens with the Bearer scheme. Only MCP servers may.",
+            "The endpoint accepts Session Tokens with the Bearer scheme. Only an MCP server without DPoP may, with a Bearer token issued for it.",
         );
     }
 

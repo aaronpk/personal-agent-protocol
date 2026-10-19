@@ -47,8 +47,11 @@ are left out.
 - [ ] **MUST**: Companies MUST require DPoP everywhere else (below).
 - [ ] **MUST**: The Company MUST validate every proof as RFC 9449 §4.3 describes.
 - [ ] **MUST**: At the token endpoint, the Company MUST reject a proof whose `jti` it has already accepted within the acceptance window, because a replayed proof there could get a new token.
-- [ ] **MUST**: Companies MUST accept Bearer Session Tokens only on their MCP APIs (section 6), and MUST require DPoP everywhere else.
+- [ ] **MUST NOT**: The Company MUST NOT issue a Personal Agent a Bearer Session Token for an MCP server that supports DPoP, so a request without a proof gets `invalid_dpop_proof`.
+- [ ] **MUST**: Companies MUST accept a Bearer Session Token only at the MCP server whose `url` equals its `resource`, and MUST reject it at every other endpoint, including other paths on the same host.
+- [ ] **MUST**: Everywhere else, Companies MUST require DPoP, and MUST reject a DPoP Session Token sent with the `Bearer` scheme (RFC 9449 §7.1).
 - [ ] **SHOULD**: New MCP servers SHOULD support DPoP.
+- [ ] **MUST**: An MCP server that supports DPoP MUST list `ES256` in its `dpop_signing_alg_values_supported`, and Personal Agents sign proofs for it with `ES256` or with an algorithm from that list.
 - [ ] **MUST**: Companies MUST accept the token in the `Authorization` header without requiring cookies.
 - [ ] **MUST NOT**: Personal Agents MUST NOT send tokens in a URL, and Companies MUST NOT accept them from one.
 
@@ -125,8 +128,8 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 - [ ] Use an acceptance window of about one minute, plus a small clock skew.
 - [ ] Require nonces if you want proofs that can't be made in advance. A nonce stays valid for a while, so it doesn't stop a proof being replayed. It doesn't replace the replay cache.
 - [ ] Check whether your authorization server can issue DPoP-bound tokens. If it can't, put a gateway in front of both your token endpoint and your APIs and conversation endpoint. It checks the proof on each token request, records the key for the token it issues, and checks that key on every later request. Checking a proof's signature alone isn't enough.
-- [ ] Accept Bearer session tokens only on your MCP APIs (MUST, 4.3).
-- [ ] Support DPoP on a new MCP server (SHOULD, 4.3): list `dpop_signing_alg_values_supported` in its protected resource metadata, with ES256, and verify proofs as on your other APIs. Keep accepting Bearer tokens for MCP clients without DPoP, and reject a DPoP token sent as a Bearer token.
+- [ ] Accept a Bearer session token only at the MCP server whose `url` is its `resource`, not at other paths on the same host (MUST, 4.3).
+- [ ] Support DPoP on a new MCP server (SHOULD, 4.3): list `dpop_signing_alg_values_supported` in its protected resource metadata, with ES256, and verify proofs as on your other APIs. Then issue personal agents only DPoP tokens for it. Keep accepting Bearer tokens from MCP clients that don't implement Poppy, and reject a DPoP token sent as a Bearer token.
 - [ ] Serve personal agent conversations only from your conversation endpoint (7.2). If your website chat or other channels can open the same conversations, they may not check DPoP, and anyone with a copied token could read them there.
 
 ### Recommended: [Internal services](https://personalagentprotocol.org/docs/0.2/guides#company-internal)
@@ -160,7 +163,7 @@ Section 4.3 lists the checks you MUST make on every proof. To make them reliably
 ### Specification: [6. APIs](https://personalagentprotocol.org/docs/0.2/spec#apis)
 
 - [ ] **MUST**: Each API's `type` MUST be one of these:
-- [ ] **MUST**: Every listed API MUST accept Session Tokens as described in 4.3: DPoP for OpenAPI, and for MCP, Bearer, plus DPoP if the server supports it.
+- [ ] **MUST**: Every listed API MUST accept Session Tokens as described in 4.3: DPoP for OpenAPI, and for MCP, DPoP if the server supports it and Bearer if it doesn't.
 - [ ] **MUST**: A listed MCP server MUST accept Session Tokens as its access tokens and enforce their scopes.
 - [ ] **MUST**: It MUST accept only tokens issued for its `url` (4.3).
 - [ ] **MUST**: MCP clients find where to get a token from the server's protected resource metadata (RFC 9728), and its `authorization_servers` MUST include `auth.issuer`.

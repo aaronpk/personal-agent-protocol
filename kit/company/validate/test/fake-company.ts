@@ -23,6 +23,12 @@ export type Flaws = {
     noDpopAlgs?: boolean;
     dpopAlgsWithoutEs256?: boolean;
     acceptTokenEndpointAud?: boolean;
+    // The MCP server supports DPoP.
+    mcpDpop?: boolean;
+    // Issues a Bearer token for the MCP server even when it supports DPoP.
+    bearerAtDpopMcp?: boolean;
+    // Issues a DPoP token for the MCP server without DPoP when the request has a proof.
+    dpopAtBearerMcp?: boolean;
 };
 
 export const ORIGIN = "https://shop.test";
@@ -133,10 +139,11 @@ export function fakeCompany(agentDir: string, flaws: Flaws = {}): FetchLike {
         const resource = form.get("resource") ?? undefined;
         if (resource && resource !== MCP) return json(400, { error: "invalid_target" });
         const access = randomId(24);
-        const type = jkt ? "DPoP" : "Bearer";
-        if (type === "Bearer" && resource !== MCP)
+        let type: Token["type"] = jkt ? "DPoP" : "Bearer";
+        if (resource === MCP && !flaws.mcpDpop && !flaws.dpopAtBearerMcp) type = "Bearer";
+        if (type === "Bearer" && (resource !== MCP || (flaws.mcpDpop && !flaws.bearerAtDpopMcp)))
             return json(400, { error: "invalid_dpop_proof" });
-        tokens.set(access, { type, jkt, sessionId, resource });
+        tokens.set(access, { type, jkt: type === "DPoP" ? jkt : undefined, sessionId, resource });
         return json(
             200,
             {
@@ -339,17 +346,22 @@ export function fakeCompany(agentDir: string, flaws: Flaws = {}): FetchLike {
         if (path === "/openapi.json")
             return json(200, { openapi: "3.1.0", info: { title: "Shop" }, paths: {} });
         if (path === "/.well-known/oauth-protected-resource/mcp")
-            return json(200, { resource: MCP, authorization_servers: [ORIGIN] });
+            return json(200, {
+                resource: MCP,
+                authorization_servers: [ORIGIN],
+                ...(flaws.mcpDpop ? { dpop_signing_alg_values_supported: ["ES256"] } : {}),
+            });
         if (url.toString() === TOKEN && method === "POST") return tokenEndpoint(headers, body);
         if (url.toString() === MCP) {
             const [scheme, value] = (headers.get("authorization") ?? "").split(" ");
             const token = value ? tokens.get(value) : undefined;
-            if (
-                scheme !== "Bearer" ||
-                !token ||
-                token.type !== "Bearer" ||
-                token.resource !== MCP
-            ) {
+            const bearerOk = scheme === "Bearer" && token?.type === "Bearer";
+            const dpopOk =
+                flaws.mcpDpop &&
+                scheme === "DPoP" &&
+                token?.type === "DPoP" &&
+                (await verifyProof(headers.get("dpop"), method, MCP, value)) === token.jkt;
+            if (!token || token.resource !== MCP || !(bearerOk || dpopOk)) {
                 return json(
                     401,
                     { error: "invalid_token" },

@@ -24,6 +24,7 @@ const EXAMPLES: Record<string, Target> = {
     "starting-sessions:1": "session-assertion.schema.json",
     "starting-sessions:2": "token-response.schema.json",
     "sending-tokens:1": "dpop-proof.schema.json",
+    "sending-tokens:2": "token-response.schema.json",
     "sign-in:1": "token-response.schema.json",
     "device-sign-in:1": "device-authorization-response.schema.json",
     "mediated-sign-in:1": excerpt(

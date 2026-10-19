@@ -167,7 +167,7 @@ The Personal Agent uses these fields of the metadata:
 
 - `device_authorization_endpoint` starts Device Sign-In (4.6). Required if `auth.device` is present.
 
-Companies MUST accept DPoP Proofs (4.3) signed with `ES256`, so every Personal Agent has an algorithm that works at every Company. A Company MAY list the algorithms it accepts in `dpop_signing_alg_values_supported`, as [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449) §5.1 defines, and the list MUST then include `ES256`. Personal Agents MUST sign DPoP Proofs with `ES256` or with an algorithm from that list. The field also tells every other OAuth client of the issuer that it supports DPoP, so a Company whose issuer serves other clients, such as MCP clients that use Bearer tokens (section 6), can leave it out.
+Companies MUST accept DPoP Proofs (4.3) signed with `ES256`, so every Personal Agent has an algorithm that works at every Company. A Company MAY list the algorithms it accepts in `dpop_signing_alg_values_supported`, as [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449) §5.1 defines, and the list MUST then include `ES256`. Personal Agents MUST sign DPoP Proofs with `ES256` or with an algorithm from that list, except at an MCP server, where the list in the server's protected resource metadata applies (4.3). The field also tells every other OAuth client of the issuer that it supports DPoP, so a Company whose issuer serves other clients, such as MCP clients that use Bearer tokens (section 6), can leave it out.
 
 The metadata MAY have other fields, which Personal Agents ignore. Personal Agents SHOULD cache it according to its HTTP caching headers.
 
@@ -263,7 +263,7 @@ A Personal Agent MAY instead give a User a new User ID for each anonymous browsi
 
 The Personal Agent holds the User IDs of each of its Users at every Company, and MUST keep that mapping confidential: it MUST NOT publish it or share it with third parties, other than service providers that process it on the Personal Agent's behalf.
 
-To start a Session, the Personal Agent requests a Session Token from the Company's `token_endpoint` with the JWT bearer grant ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)). The assertion is a short-lived JWT signed with a key from its `jwks_uri`, naming itself in `iss` and the User in `sub`. Like every token request, it also carries the Personal Agent's client assertion (4.1) and a DPoP Proof (4.3).
+To start a Session, the Personal Agent requests a Session Token from the Company's `token_endpoint` with the JWT bearer grant ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)). The assertion is a short-lived JWT signed with a key from its `jwks_uri`, naming itself in `iss` and the User in `sub`. Like every token request, it also carries the Personal Agent's client assertion (4.1) and a DPoP Proof (4.3). Only a request for a Bearer token for an MCP server can leave the proof out.
 
 *Request: Personal Agent → Company*
 
@@ -317,7 +317,7 @@ Cache-Control: no-store
 }
 ```
 
-- `access_token` is the Session Token. `token_type` is `DPoP`, or `Bearer` for a token requested without a proof (4.3).
+- `access_token` is the Session Token. `token_type` is `DPoP`, or `Bearer` for a token for an MCP server that doesn't support DPoP (4.3).
 - `expires_in` is the token's lifetime in seconds. The Company chooses the value, and it MUST be greater than 0. Session Tokens SHOULD last hours, not days.
 - `session_id` identifies the Session. It is not a credential.
 - `signed_in` says whether the Session is signed in to a Company account.
@@ -372,10 +372,10 @@ DPoP in this protocol is meant to match RFC 9449, and anything this section does
 - Companies MUST accept `ES256`, and listing their algorithms in `dpop_signing_alg_values_supported` is optional (3.2).
 - Personal Agents MUST support nonces.
 - The token endpoint MUST reject a reused `jti`. Elsewhere the check is optional, as in the RFC.
-- MCP servers accept Bearer Session Tokens, and also DPoP ones if they support DPoP. Companies MUST require DPoP everywhere else (below).
+- An MCP server that doesn't support DPoP uses Bearer Session Tokens, each for that server only. Companies MUST require DPoP everywhere else (below).
 - Companies don't need to support `dpop_jkt` (RFC 9449 §10).
 
-**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent MUST use a different key pair for each User ID (4.2), so Companies can't link Users by their keys, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request, including token requests. A proof is a JWT with the public key in its header:
+**Proof of possession.** Session Tokens are bound to a key the Personal Agent holds, so a copied token is useless without it. The Personal Agent MUST use a different key pair for each User ID (4.2), so Companies can't link Users by their keys, and MAY use a new one for each Session. It keeps the private key to itself and signs a new proof for every request, including token requests. The only exception is a Bearer token for an MCP server (below). A proof is a JWT with the public key in its header:
 
 *DPoP Proof (JWT header and payload)*
 
@@ -415,9 +415,16 @@ When the Company issues a Session Token, it binds the token to the key in that r
 
 A Company MAY require proofs to include a nonce it issued, as RFC 9449 describes, so proofs can't be made in advance. Personal Agents MUST support nonces. A failed check returns `invalid_dpop_proof`, or `use_dpop_nonce` with the nonce to use in the `DPoP-Nonce` header. The token endpoint returns them as OAuth errors with HTTP 400 (4.2). APIs and conversation endpoints return HTTP 401 with the error in the `WWW-Authenticate: DPoP` header (section 6).
 
-**MCP.** MCP authorization uses Bearer tokens, and many MCP servers and clients don't support DPoP. An MCP server supports DPoP if its protected resource metadata (section 6) lists `dpop_signing_alg_values_supported`, as [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) §2 defines. At such a server, the Personal Agent MUST use a DPoP Session Token and send proofs, as at any other API. Otherwise, the Personal Agent requests a Session Token without a proof, and the Company issues a `Bearer` token. To get either for an existing Session, the Personal Agent sends the request that renews the Session's token (4.2, or 4.8 for a signed-in Session), with the `DPoP` header for a DPoP token or without it for a Bearer token, and MUST include `resource` set to the MCP server's `url` from `poppy.json`, as MCP authorization requires. Anyone who copies a Bearer token can use it, so each one works at only one MCP server. A Session can have DPoP and Bearer tokens at the same time. Companies MUST accept Bearer Session Tokens only on their MCP APIs (section 6), and MUST require DPoP everywhere else. Web browsing doesn't use Session Tokens (section 5).
+**MCP.** MCP authorization uses Bearer tokens, and many MCP servers and clients don't support DPoP. An MCP server supports DPoP if its protected resource metadata (section 6) lists `dpop_signing_alg_values_supported`, as [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) §2 defines. To get a token for an MCP server, the Personal Agent sends the request that starts a Session (4.2, 4.8) or renews its token (4.2, or 4.8 for a signed-in Session), and MUST include `resource` set to the MCP server's `url` from `poppy.json`, as MCP authorization requires. The Company chooses the token type by that server:
 
-New MCP servers SHOULD support DPoP. Leaving it out is meant for existing MCP servers whose software can't verify DPoP Proofs yet. An MCP server that supports DPoP lists `ES256` in its `dpop_signing_alg_values_supported`, verifies proofs as this section describes, and rejects a DPoP Session Token sent with the `Bearer` scheme (RFC 9449 §7.1). It still accepts Bearer tokens, so MCP clients without DPoP keep working (section 6).
+- For an MCP server that supports DPoP, the Company issues a DPoP Session Token, which the Personal Agent uses with proofs, as at any other API. The Company MUST NOT issue a Personal Agent a Bearer Session Token for an MCP server that supports DPoP, so a request without a proof gets `invalid_dpop_proof`.
+- For an MCP server that doesn't support DPoP, the Company issues a `Bearer` Session Token, even if the request has a proof, and never a DPoP one. The Personal Agent MAY leave the proof out of that request.
+
+The Personal Agent MUST use the scheme that `token_type` names. A Session can have a token for each MCP server and one for its other APIs at the same time. Anyone who copies a Bearer token can use it, so each one works at only one MCP server. Companies MUST accept a Bearer Session Token only at the MCP server whose `url` equals its `resource`, and MUST reject it at every other endpoint, including other paths on the same host. Everywhere else, Companies MUST require DPoP, and MUST reject a DPoP Session Token sent with the `Bearer` scheme (RFC 9449 §7.1). Web browsing doesn't use Session Tokens (section 5).
+
+New MCP servers SHOULD support DPoP. Leaving it out is meant for existing MCP servers whose software can't verify DPoP Proofs yet. An MCP server that supports DPoP MUST list `ES256` in its `dpop_signing_alg_values_supported`, and Personal Agents sign proofs for it with `ES256` or with an algorithm from that list. It verifies proofs as this section describes, and rejects a DPoP Session Token sent with the `Bearer` scheme. It still accepts Bearer tokens from MCP clients that don't implement this protocol (section 6).
+
+For example, to get a token for an MCP server that doesn't support DPoP, for a signed-in Session, the Personal Agent sends its Account Token (4.8) with `resource` and without a proof:
 
 *Request: Personal Agent → Company*
 
@@ -432,6 +439,19 @@ grant_type=refresh_token
 &client_id=https%3A%2F%2Fagent.example%2Fagent.json
 &client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
 &client_assertion=eyJhbGciOiJFUzI1NiIs…
+```
+
+*Response: Company → Personal Agent*
+
+```
+{
+  "access_token": "eyJhbGciOi…Mc8r",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "poppy:read",
+  "session_id": "ses_2Lm0",
+  "signed_in": true
+}
 ```
 
 **Narrower tokens.** Any token request MAY include `scope`, to ask for fewer scopes than the Session has, and `resource` ([RFC 8707](https://www.rfc-editor.org/rfc/rfc8707)), to ask for a token for one service. By default, one DPoP Session Token works at all of a Company's services, except MCP servers, which accept only tokens issued for them (above). A Company that wants separate tokens for some services gives those entries a `resource` in its `poppy.json` (section 3), and accepts a token at such a service only if it was issued for that `resource`.
@@ -831,7 +851,7 @@ A Company can list APIs in its `poppy.json` (section 3). Each API's `type` MUST 
 | `openapi` | An OpenAPI 3.0 or 3.1 description of the API. | [OpenAPI Specification 3.1](https://spec.openapis.org/oas/v3.1.1.html) |
 | `mcp` | A remote MCP server endpoint, using the Streamable HTTP transport and MCP version 2025-06-18 or later. | [Model Context Protocol 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18) |
 
-Personal Agents SHOULD skip API types they don't recognize, so later versions can add types. The protocol leaves each API's schema to that API. Every listed API MUST accept Session Tokens as described in 4.3: DPoP for OpenAPI, and for MCP, Bearer, plus DPoP if the server supports it.
+Personal Agents SHOULD skip API types they don't recognize, so later versions can add types. The protocol leaves each API's schema to that API. Every listed API MUST accept Session Tokens as described in 4.3: DPoP for OpenAPI, and for MCP, DPoP if the server supports it and Bearer if it doesn't.
 
 A listed MCP server MUST accept Session Tokens as its access tokens and enforce their scopes. It MUST accept only tokens issued for its `url` (4.3). MCP clients find where to get a token from the server's protected resource metadata ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)), and its `authorization_servers` MUST include `auth.issuer`. An MCP client that doesn't implement this protocol can then sign in with MCP's own authorization flow, and the Company treats that sign-in as starting a new signed-in Session. Such a Session has no User ID, so the User ID rules (4.2) don't apply: it belongs to the MCP client and the signed-in account. It can't continue signed out, so it ends when the sign-in is revoked or expires.
 
@@ -848,7 +868,7 @@ Content-Type: application/json
 { "item_id": "itm_4Qa", "replacement_sku": "stormline-insulated-m" }
 ```
 
-These errors are returned in the `WWW-Authenticate` header ([RFC 9449](https://www.rfc-editor.org/rfc/rfc9449), or [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750) for Bearer tokens):
+These errors are returned in the `WWW-Authenticate` header ([RFC 9449](https://www.rfc-editor.org/rfc/rfc9449), or [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750) for Bearer tokens). An MCP server's 401 responses carry a challenge for each scheme it accepts, `Bearer` and, if it supports DPoP, `DPoP`, and each challenge includes `resource_metadata` with the server's protected resource metadata URL ([RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) §5.1):
 
 | Error | Status | Meaning |
 | --- | --- | --- |

@@ -123,11 +123,13 @@ can't change.
 
 ### 3.2 Who can use an operation {#ownership}
 
-An operation belongs to the Session it was proposed in. If that Session is signed in, it also
-belongs to the account: any Session of the same Personal Agent and User that is signed in to the
-same account can read, confirm, and cancel it, for example after the original Session has ended. An
-operation proposed in a signed-out Session can be used only in that Session. The Company returns
-`operation_not_found` to anyone else.
+An operation proposed in a signed-out Session can be used only in that Session. An operation
+proposed in a signed-in Session belongs to the account instead: any Session of the same Personal
+Agent and User can read, confirm, and cancel it while that Session is signed in to the same account,
+for example after the original Session has ended. The Company checks the Session's state at each
+request, so after the original Session signs out, it can't use the operation either. A signed-out
+Session of the same Personal Agent and User gets `sign_in_required` (spec section 6). The Company
+returns `operation_not_found` to anyone else.
 
 The Company MUST keep an operation readable at least until it is final. How long it keeps final
 operations is up to the Company.

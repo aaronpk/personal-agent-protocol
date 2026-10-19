@@ -44,18 +44,21 @@ Patterns: `patterns/openapi.md`, `patterns/mcp.md`, `patterns/conversations.md`,
 
 - List the server in `apis` with `type: "mcp"` and its Streamable HTTP endpoint as `url`, MCP version
   2025-06-18 or later ([section 6](https://personalagentprotocol.org/docs/0.2/spec#apis)).
-- The token endpoint issues a `Bearer` Session Token when a request has no `DPoP` header and has
-  `resource` set to the MCP server's `url`
-  ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens), "MCP"). Issue Bearer tokens
-  only for MCP servers.
-- A new MCP server should also support DPoP: list `dpop_signing_alg_values_supported`, with `ES256`,
-  in its protected resource metadata, verify proofs, and reject a DPoP token sent as a Bearer token.
-  The token endpoint then issues a DPoP Session Token for a request with a proof and `resource` set
-  to the server's `url`. Keep accepting Bearer tokens for MCP clients without DPoP.
+- A new MCP server should support DPoP: list `dpop_signing_alg_values_supported`, with `ES256`, in
+  its protected resource metadata, verify proofs, and reject a DPoP token sent as a Bearer token.
+  The token endpoint issues Personal Agents only DPoP Session Tokens for it, for a request with a
+  proof and `resource` set to the server's `url`, and answers one without a proof with
+  `invalid_dpop_proof` ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens), "MCP").
+  Keep accepting Bearer tokens from MCP clients that don't implement Poppy.
+- For an MCP server without DPoP, the token endpoint issues a `Bearer` Session Token for a request
+  with `resource` set to the server's `url`, whether or not it has a proof. Issue Bearer tokens only
+  for MCP servers without DPoP.
 - The MCP server accepts Session Tokens as its access tokens, only those issued for its `url`, and
   enforces their scopes.
 - Publish RFC 9728 protected resource metadata whose `authorization_servers` includes `auth.issuer`.
-- Accept Bearer Session Tokens only on MCP APIs. Everything else requires DPoP (4.3).
+  Each 401 carries a challenge for each scheme the server accepts, with `resource_metadata`.
+- Accept a Bearer Session Token only at the MCP server whose `url` is its `resource`, not at other
+  paths on the same host. Everything else requires DPoP (4.3).
 
 ## Conversations
 

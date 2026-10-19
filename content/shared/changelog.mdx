@@ -76,11 +76,17 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: DPoP errors at APIs and conversations.** `invalid_dpop_proof` and `use_dpop_nonce`
   come with HTTP 401 and the `WWW-Authenticate: DPoP` header. At the token endpoint they're OAuth
   errors with HTTP 400 ([4.3](/docs/spec#sending-tokens), [6](/docs/spec#apis)).
-- **DPoP at MCP servers.** An MCP server supports DPoP by listing
-  `dpop_signing_alg_values_supported` in its protected resource metadata. Personal Agents then use a
-  DPoP Session Token there, issued for the server's `resource`. The server still accepts Bearer
-  tokens for MCP clients without DPoP, and rejects a DPoP token sent as a Bearer token. New MCP
-  servers should support DPoP ([4.3](/docs/spec#sending-tokens), [6](/docs/spec#apis)).
+- **Breaking: DPoP at MCP servers.** An MCP server supports DPoP by listing
+  `dpop_signing_alg_values_supported`, with `ES256`, in its protected resource metadata. The Company
+  chooses the token type by the `resource` of the token request: a DPoP Session Token for such a
+  server, never a Bearer one for a Personal Agent, and a Bearer token for any other MCP server, even
+  if the request has a proof. Every token request for an MCP server, including one that starts a
+  Session, includes `resource`. A Bearer token works only at the MCP server whose `url` is its
+  `resource`, not at other paths on the same host. A server with DPoP still accepts Bearer tokens
+  from MCP clients that don't implement this protocol, and rejects a DPoP token sent as a Bearer
+  token. An MCP server's 401 has a challenge for each scheme it accepts, each with
+  `resource_metadata`. New MCP servers should support DPoP ([4.3](/docs/spec#sending-tokens),
+  [6](/docs/spec#apis)).
   [Issue #6](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/6)
 - **`rate_limited` body.** At the token endpoint and at endpoints this protocol or an extension
   defines, such as conversations and Mediated Sign-In, the body is `{"error": "rate_limited"}`.
@@ -147,6 +153,10 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   instructions, and MUST NOT act at one Company, or send it information, because another Company's
   content asked. References move to section 10 ([9](/docs/spec#security),
   [9.1](/docs/spec#untrusted-content)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)
+- **Breaking: Operations after sign-out.** An operation proposed in a signed-in Session can be used
+  only by a Session that is signed in to the same account at the time of the request, including the
+  original one. A signed-out Session of the same Personal Agent and User gets `sign_in_required`
+  ([Operations 3.2](/docs/extensions/operations#ownership)).
 - **Operations.** Personal Agents should show the User the values in an operation's `terms` next to
   its `summary`, or check that they agree, before asking for approval ([Operations
   5.1](/docs/extensions/operations#approval)). [Issue #4](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/4)

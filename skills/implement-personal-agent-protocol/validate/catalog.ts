@@ -213,7 +213,7 @@ export const CATALOG: CheckInfo[] = [
         "session.token-type",
         "A Session Token requested with a DPoP Proof has token_type DPoP",
         "spec#starting-sessions",
-        "token_type is DPoP, or Bearer for a token requested without a proof (4.3).",
+        "token_type is DPoP, or Bearer for a token for an MCP server that doesn't support DPoP (4.3).",
     ),
     foundation(
         "session.expires-in",
@@ -319,7 +319,7 @@ export const CATALOG: CheckInfo[] = [
         "dpop.bearer-scheme",
         "A DPoP Session Token sent with the Bearer scheme is rejected",
         "spec#sending-tokens",
-        "Companies MUST accept Bearer Session Tokens only on their MCP APIs (section 6), and MUST require DPoP everywhere else.",
+        "Everywhere else, Companies MUST require DPoP, and MUST reject a DPoP Session Token sent with the Bearer scheme (RFC 9449 §7.1).",
     ),
     foundation(
         "dpop.wrong-ath",
@@ -381,9 +381,9 @@ export const CATALOG: CheckInfo[] = [
     ),
     interfaces(
         "mcp.bearer-token",
-        "Token endpoint issues a Bearer Session Token for the MCP server's resource",
+        "Token endpoint issues a Bearer Session Token for an MCP server without DPoP, with or without a proof",
         "spec#sending-tokens",
-        "Otherwise, the Personal Agent requests a Session Token without a proof, and the Company issues a Bearer token.",
+        "For an MCP server that doesn't support DPoP, the Company issues a Bearer Session Token, even if the request has a proof, and never a DPoP one.",
     ),
     interfaces(
         "mcp.bearer-accepted",
@@ -398,6 +398,24 @@ export const CATALOG: CheckInfo[] = [
         "It MUST accept only tokens issued for its url (4.3).",
     ),
     interfaces(
+        "mcp.dpop-server-token",
+        "Token endpoint issues a DPoP Session Token for an MCP server that supports DPoP",
+        "spec#sending-tokens",
+        "For an MCP server that supports DPoP, the Company issues a DPoP Session Token, which the Personal Agent uses with proofs, as at any other API.",
+    ),
+    interfaces(
+        "mcp.dpop-server-no-bearer",
+        "Token endpoint refuses a Bearer Session Token for an MCP server that supports DPoP",
+        "spec#sending-tokens",
+        "The Company MUST NOT issue a Personal Agent a Bearer Session Token for an MCP server that supports DPoP, so a request without a proof gets invalid_dpop_proof.",
+    ),
+    interfaces(
+        "mcp.dpop-server-accepted",
+        "The MCP server accepts a DPoP Session Token issued for it",
+        "spec#apis",
+        "A listed MCP server MUST accept Session Tokens as its access tokens and enforce their scopes.",
+    ),
+    interfaces(
         "mcp.other-resource-rejected",
         "The MCP server rejects a Bearer token issued for another resource",
         "spec#apis",
@@ -407,7 +425,7 @@ export const CATALOG: CheckInfo[] = [
         "mcp.bearer-elsewhere-rejected",
         "A Bearer token for the MCP server is rejected outside MCP",
         "spec#sending-tokens",
-        "Companies MUST accept Bearer Session Tokens only on their MCP APIs (section 6), and MUST require DPoP everywhere else.",
+        "Companies MUST accept a Bearer Session Token only at the MCP server whose url equals its resource, and MUST reject it at every other endpoint, including other paths on the same host.",
     ),
 
     // Milestone 2: conversations (section 7), signed out.

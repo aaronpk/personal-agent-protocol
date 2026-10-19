@@ -136,7 +136,7 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 - Account tokens MUST be stored as secrets ([4.8](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)). Encrypt them at rest, apart from the model and its tools. Give tools a reference to the token, not the token.
 - Keep session tokens in memory and drop them when they expire.
 - Store account tokens by the company's full `auth.issuer`, as for [user IDs](#agent-user-ids), so a token from one company hosted by a provider is never sent to another.
-- Request Bearer session tokens only for MCP servers that don't support DPoP ([4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). Check the server's protected resource metadata for `dpop_signing_alg_values_supported` first. Bearer tokens can be used by anyone who copies them. Each one is limited to one MCP server by `resource`, and you can also narrow it with `scope`.
+- Include `resource` in every token request for an MCP server, and use the scheme `token_type` names (MUST, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)). The company issues a Bearer token only for an MCP server whose protected resource metadata doesn't list `dpop_signing_alg_values_supported`. Bearer tokens can be used by anyone who copies them. Each one is limited to one MCP server by `resource`, and you can also narrow it with `scope`.
 - When the company returns a new account token, you MUST use it from then on ([4.8](https://personalagentprotocol.org/docs/0.2/spec#account-tokens)). Replace the stored one right away.
 - After the user signs in again for more scopes, revoke the old account token ([4.4](https://personalagentprotocol.org/docs/0.2/spec#sign-in)).
 - On `invalid_grant` for an account token, delete it and continue signed out.
@@ -210,8 +210,8 @@ Section [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens) li
 - Use an acceptance window of about one minute, plus a small clock skew.
 - Require nonces if you want proofs that can't be made in advance. A nonce stays valid for a while, so it doesn't stop a proof being replayed. It doesn't replace the replay cache.
 - Check whether your authorization server can issue DPoP-bound tokens. If it can't, put a gateway in front of both your token endpoint and your APIs and conversation endpoint. It checks the proof on each token request, records the key for the token it issues, and checks that key on every later request. Checking a proof's signature alone isn't enough.
-- Accept Bearer session tokens only on your MCP APIs (MUST, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
-- Support DPoP on a new MCP server (SHOULD, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)): list `dpop_signing_alg_values_supported` in its protected resource metadata, with ES256, and verify proofs as on your other APIs. Keep accepting Bearer tokens for MCP clients without DPoP, and reject a DPoP token sent as a Bearer token.
+- Accept a Bearer session token only at the MCP server whose `url` is its `resource`, not at other paths on the same host (MUST, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)).
+- Support DPoP on a new MCP server (SHOULD, [4.3](https://personalagentprotocol.org/docs/0.2/spec#sending-tokens)): list `dpop_signing_alg_values_supported` in its protected resource metadata, with ES256, and verify proofs as on your other APIs. Then issue personal agents only DPoP tokens for it. Keep accepting Bearer tokens from MCP clients that don't implement Poppy, and reject a DPoP token sent as a Bearer token.
 - Serve personal agent conversations only from your conversation endpoint ([7.2](https://personalagentprotocol.org/docs/0.2/spec#conversation-requests)). If your website chat or other channels can open the same conversations, they may not check DPoP, and anyone with a copied token could read them there.
 
 ### Token lifetimes and sign-out

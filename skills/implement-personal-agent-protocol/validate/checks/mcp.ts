@@ -1,7 +1,8 @@
-// Milestone 2: listed MCP servers (sections 4.3 and 6): protected resource metadata, Bearer Session
-// Tokens bound to each server's url, and DPoP tokens refused.
+// Milestone 2: listed MCP servers (sections 4.3 and 6): protected resource metadata, Session Tokens
+// bound to each server's url (DPoP at a server that supports it, Bearer otherwise), and the general
+// DPoP token refused.
 
-import { authedRequest, heldToken, sessionParams, tokenRequest } from "../agent.ts";
+import { authedRequest, dpopKey, heldToken, sessionParams, tokenRequest } from "../agent.ts";
 import { getFollowing, header, parseWwwAuthenticate, type Exchange } from "../http.ts";
 import { formatSchemaErrors } from "../schema.ts";
 import { check } from "../schemas.ts";
@@ -14,6 +15,9 @@ export const MCP_IDS = [
     "mcp.authorization-servers",
     "mcp.bearer-token",
     "mcp.bearer-accepted",
+    "mcp.dpop-server-token",
+    "mcp.dpop-server-no-bearer",
+    "mcp.dpop-server-accepted",
     "mcp.dpop-token-rejected",
     "mcp.other-resource-rejected",
     "mcp.bearer-elsewhere-rejected",
@@ -120,6 +124,7 @@ export async function checkMcp(ctx: Context, r: Recorder): Promise<void> {
     const issuer = ctx.discovered.poppy?.auth?.issuer;
     const agg = aggregator(r);
     const bearer: Record<string, HeldToken> = {};
+    let dpopServers = 0;
 
     for (const url of servers) {
         // No token: 401 pointing at the protected resource metadata.
@@ -154,7 +159,15 @@ export async function checkMcp(ctx: Context, r: Recorder): Promise<void> {
                 headers: { Accept: "application/json" },
             })
         ).final!;
-        const doc = prm.json as { resource?: unknown; authorization_servers?: unknown } | undefined;
+        const doc = prm.json as
+            | {
+                  resource?: unknown;
+                  authorization_servers?: unknown;
+                  dpop_signing_alg_values_supported?: unknown;
+              }
+            | undefined;
+        const supportsDpop = Array.isArray(doc?.dpop_signing_alg_values_supported);
+        if (supportsDpop) dpopServers++;
         if (prm.status !== 200 || !doc || typeof doc !== "object") {
             agg.add("mcp.metadata", "fail", url, {
                 exchange: prm,
@@ -193,46 +206,87 @@ export async function checkMcp(ctx: Context, r: Recorder): Promise<void> {
         }
 
         if (!ctx.session.token) continue;
-
-        // A Bearer token for this server: the renewal request without DPoP, with resource.
-        const tokenEx = (
-            await tokenRequest(
+        const renew = (proof: "auto" | "none", note: string) =>
+            tokenRequest(
                 ctx,
-                sessionParams(ctx, { session_id: ctx.session.token.sessionId, resource: url }),
-                { proof: "none", note: `renewing the Session without DPoP, resource=${url}` },
-            )
-        ).ex;
-        const token = heldToken(tokenEx, undefined, url);
-        if (!token) {
-            agg.add("mcp.bearer-token", "fail", url, {
-                exchange: tokenEx,
-                expected: "200 with a Bearer Session Token",
-                cause: "The token endpoint should issue a Bearer token when the request has no DPoP proof and names an MCP server in resource.",
-            });
-            continue;
+                sessionParams(ctx, { session_id: ctx.session.token!.sessionId, resource: url }),
+                { proof, note },
+            );
+
+        let token: HeldToken | undefined;
+        if (supportsDpop) {
+            // A DPoP server: a DPoP token for a request with a proof, and no Bearer token without one.
+            const key = await dpopKey(ctx);
+            const dpopEx = (await renew("auto", `renewing the Session with DPoP, resource=${url}`))
+                .ex;
+            const issued = heldToken(dpopEx, key, url);
+            if (!issued || issued.tokenType.toLowerCase() !== "dpop") {
+                agg.add("mcp.dpop-server-token", "fail", url, {
+                    exchange: dpopEx,
+                    got: issued ? `token_type ${issued.tokenType}` : undefined,
+                    expected: "200 with token_type DPoP",
+                    cause: "The server's protected resource metadata lists dpop_signing_alg_values_supported, so the token endpoint should issue a DPoP Session Token for it.",
+                });
+            } else {
+                agg.add("mcp.dpop-server-token", "pass", url);
+                token = issued;
+            }
+            const bearerEx = (
+                await renew("none", `renewing the Session without DPoP, resource=${url}`)
+            ).ex;
+            if (heldToken(bearerEx, undefined, url))
+                agg.add("mcp.dpop-server-no-bearer", "fail", url, {
+                    exchange: bearerEx,
+                    got: "200 with a token",
+                    expected: "400 invalid_dpop_proof",
+                    cause: "The server supports DPoP, so Personal Agents get only DPoP Session Tokens for it.",
+                });
+            else agg.add("mcp.dpop-server-no-bearer", "pass", url);
+            if (!token) continue;
+        } else {
+            // A server without DPoP: a Bearer token, with or without a proof.
+            const tries = [
+                await renew("none", `renewing the Session without DPoP, resource=${url}`),
+                await renew("auto", `renewing the Session with a DPoP Proof, resource=${url}`),
+            ];
+            const bad: Detail[] = [];
+            for (const { ex } of tries) {
+                const issued = heldToken(ex, undefined, url);
+                if (!issued)
+                    bad.push({
+                        exchange: ex,
+                        expected: "200 with a Bearer Session Token",
+                        cause: "The token endpoint should issue a Bearer token for a request that names an MCP server without DPoP in resource, whether or not it has a proof.",
+                    });
+                else if (issued.tokenType.toLowerCase() !== "bearer")
+                    bad.push({
+                        exchange: ex,
+                        got: `token_type ${issued.tokenType}`,
+                        expected: "token_type Bearer",
+                        cause: "The server doesn't support DPoP, so its tokens are Bearer tokens, even for a request with a proof.",
+                    });
+                else token ??= { ...issued, tokenType: "Bearer" };
+            }
+            if (bad.length) agg.add("mcp.bearer-token", "fail", url, bad[0]);
+            else agg.add("mcp.bearer-token", "pass", url);
+            if (!token) continue;
+            bearer[url] = token;
         }
-        if (token.tokenType.toLowerCase() !== "bearer") {
-            agg.add("mcp.bearer-token", "fail", url, {
-                exchange: tokenEx,
-                got: `token_type ${token.tokenType}`,
-                expected: "token_type Bearer",
-            });
-        } else agg.add("mcp.bearer-token", "pass", url);
-        bearer[url] = { ...token, tokenType: "Bearer" };
 
         const ok = (
             await authedRequest(ctx, {
                 method: "POST",
                 url,
-                token: bearer[url],
+                token,
                 body: INITIALIZE,
                 headers: MCP_HEADERS,
-                note: "MCP initialize with the Bearer Session Token for this server",
+                note: `MCP initialize with the ${token.tokenType} Session Token for this server`,
             })
         ).ex;
-        if (initializeOk(ok)) agg.add("mcp.bearer-accepted", "pass", url);
+        const acceptedId = supportsDpop ? "mcp.dpop-server-accepted" : "mcp.bearer-accepted";
+        if (initializeOk(ok)) agg.add(acceptedId, "pass", url);
         else
-            agg.add("mcp.bearer-accepted", "fail", url, {
+            agg.add(acceptedId, "fail", url, {
                 exchange: ok,
                 expected: "200 with an initialize result",
                 cause: "The MCP server should accept Session Tokens issued for its url as access tokens.",
@@ -331,6 +385,23 @@ export async function checkMcp(ctx: Context, r: Recorder): Promise<void> {
             );
     }
     agg.flush(servers.length > 1);
+    if (dpopServers === 0)
+        skipRest(
+            r,
+            ["mcp.dpop-server-token", "mcp.dpop-server-no-bearer", "mcp.dpop-server-accepted"],
+            "No listed MCP server supports DPoP.",
+        );
+    if (dpopServers === servers.length)
+        skipRest(
+            r,
+            [
+                "mcp.bearer-token",
+                "mcp.bearer-accepted",
+                "mcp.other-resource-rejected",
+                "mcp.bearer-elsewhere-rejected",
+            ],
+            "Every listed MCP server supports DPoP, so none uses Bearer tokens.",
+        );
     const reason = ctx.identity
         ? "No Session Token (see session.start)."
         : (ctx.identityProblem ?? "No test Personal Agent.");
