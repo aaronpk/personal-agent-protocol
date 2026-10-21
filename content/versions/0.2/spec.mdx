@@ -1814,13 +1814,13 @@ Companies a provider hosts on shared servers. A browser assertion names the Comp
 
 ### 9.5 OAuth extensions {#oauth-extensions}
 
-This profile adds a few things to OAuth that no OAuth registry lists yet. They are candidates for
+This profile adds a few things to OAuth not yet described by current exteisions. They are candidates for
 registration, or for review in the IETF OAuth working group, before a stable version:
 
 | Kind                                | Name                                                                              | Defined in |
 | ----------------------------------- | --------------------------------------------------------------------------------- | ---------- |
 | Token request and response parameter | `session_id`                                                                      | 4.2        |
-| Token response parameter            | `refresh_token_expires_in`                                                        | 4.4        |
+| Token response parameter            | `refresh_token_expires_in` [draft-ietf-oauth-refresh-token-expiration](https://datatracker.ietf.org/doc/draft-ietf-oauth-refresh-token-expiration/)                                                       | 4.4        |
 | Authorization server metadata       | `poppy_domains`                                                                   | 3.2        |
 | Token endpoint error                | `invalid_session`, `account_mismatch`, `extension_required`, `rate_limited`       | 4.2, 3.3   |
 | Resource server error               | `extension_required`                                                              | 3.3, 6     |
