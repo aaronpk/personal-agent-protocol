@@ -51,7 +51,9 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: Authorization support and scopes in the metadata.** `auth.direct`, `auth.device`, and
   `auth.mediated` are removed from `poppy.json`. A Company supports user authorization when its
   authorization server metadata lists `authorization_code` in `grant_types_supported` and has an
-  `authorization_endpoint`, and it lists the scopes it can grant in `scopes_supported`.
+  `authorization_endpoint`, and it lists the scopes it can grant in `scopes_supported`. A Company
+  that offers the device authorization grant lists it in `grant_types_supported` and gives the
+  `device_authorization_endpoint`.
   `auth.custom_scopes` still describes the Company's own scopes ([3.1](/docs/spec#fields),
   [3.2](/docs/spec#oauth-server), [4.4](/docs/spec#sign-in)).
 - **Breaking: More authorization server metadata.** The metadata includes `grant_types_supported`,
@@ -125,29 +127,33 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
 - **Breaking: A Session stays tied to its account.** Once a Session has been signed in to an
   account, it can only be signed in to that account again, even after sign-out. This applies to
   every sign-in type, and to using an Account Token with a signed-out Session
-  ([4.4](/docs/spec#sign-in), [4.6](/docs/spec#account-tokens), [4.7](/docs/spec#sign-out)).
+  ([4.4](/docs/spec#sign-in), [4.7](/docs/spec#account-tokens), [4.8](/docs/spec#sign-out)).
   [Issue #8](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/8)
 - **Breaking: Mediated Sign-In removed.** Sending the User's credentials to the Company is the
   resource owner password credentials grant under another name, which RFC 9700 §2.4 says MUST NOT
   be used. Section 4.7 and `auth.mediated` are removed. Personal Agents MUST NOT collect a User's
   credentials for a Company or submit them, and Companies MUST NOT offer a way to submit them
   ([4.4](/docs/spec#sign-in)).
-- **Breaking: Device Sign-In removed.** RFC 10027 (BCP 247) says to use the device authorization
-  grant only when no other cross-device protocol is viable, and never on the same device. A
-  Personal Agent shows whatever code and link a Company returns, which makes the flow's
-  unauthenticated channel a phishing risk. Section 4.6 and `auth.device` are removed. A Personal
-  Agent that can't receive a redirect on the User's device sends the authorization URL to the User,
-  and Companies apply RFC 10027's mitigations to a cross-device authorization code flow
-  ([4.4](/docs/spec#sign-in), [4.5](/docs/spec#direct-sign-in)).
+- **Breaking: Device authorization grant limited by RFC 10027.** Device Sign-In is now the device
+  authorization grant, kept as an option for Personal Agents that can't use the authorization code
+  grant. Companies that offer it and Personal Agents that use it MUST follow the cross-device best
+  practices in RFC 10027 (BCP 247) §2. A Company assesses the risk, limits the scopes the grant can
+  grant, and uses short-lived, single-use user codes, rate limits, and a consent page that says who
+  started the request. A Personal Agent MUST NOT use the grant when it can use the authorization
+  code grant. A new subsection explains why the grant is easier to use for phishing: anyone can
+  start a request and send the User the link and code, and the User approves on the Company's real
+  page. It adds requirements to reduce the risk, such as showing the code only in the conversation
+  where the User asked for the task and warning the User about codes they didn't ask for
+  ([4.4](/docs/spec#sign-in), [4.6](/docs/spec#device-sign-in)).
 - **Phishing-resistant authentication.** Companies SHOULD offer a phishing-resistant way for the
   User to authenticate, such as a passkey, as AIMS §10.4.1 recommends
   ([4.5](/docs/spec#direct-sign-in)).
-- **Renumbered.** Refresh tokens (formerly Account Tokens) move from 4.8 to 4.6, and revocation
-  (formerly Signing out) moves from 4.9 to 4.7. Their links don't change
-  ([4.6](/docs/spec#account-tokens), [4.7](/docs/spec#sign-out)).
+- **Renumbered.** Refresh tokens (formerly Account Tokens) move from 4.8 to 4.7, and revocation
+  (formerly Signing out) moves from 4.9 to 4.8. Their links don't change
+  ([4.7](/docs/spec#account-tokens), [4.8](/docs/spec#sign-out)).
 - **Work after a token expires.** A Session Token expiring isn't a sign-out, and work the Company
   accepted with a valid token can continue. When access is revoked, the Company may stop work in
-  progress that uses the account, or let it finish ([4.7](/docs/spec#sign-out)).
+  progress that uses the account, or let it finish ([4.8](/docs/spec#sign-out)).
   [Issue #15](https://github.com/personal-agent-protocol/personal-agent-protocol/issues/15)
 - **Breaking: After revocation.** Section 4.7 gathers the rules for a Session that continues
   pseudonymous after the User revokes the authorization or disconnects the Personal Agent. What
@@ -155,11 +161,11 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   operation, stays as it is, and a pseudonymous token gets `insufficient_scope` on it. A
   conversation stays open, so the User can authorize again and continue it. The Personal Agent
   SHOULD NOT ask the User to authorize that account again unless the User asks, even when a request
-  gets `insufficient_scope` ([4.7](/docs/spec#sign-out), [6](/docs/spec#apis),
+  gets `insufficient_scope` ([4.8](/docs/spec#sign-out), [6](/docs/spec#apis),
   [7.11](/docs/spec#conversation-sign-in)).
 - **Revocation invalidates access tokens.** As RFC 7009 §2.1 describes, a Company SHOULD invalidate
   the access tokens issued under a refresh token when it is revoked. Checking the Session on each
-  request, or short access token lifetimes, remain the fallbacks ([4.7](/docs/spec#sign-out)).
+  request, or short access token lifetimes, remain the fallbacks ([4.8](/docs/spec#sign-out)).
 - **Breaking: `sign_in_required` replaced by `insufficient_scope`.** A pseudonymous access token has
   no scopes, so a request that needs the User's account gets RFC 6750's `insufficient_scope`, with
   the scopes it needs. The same applies to the `authorization` conversation event
@@ -205,11 +211,11 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   issuer, and that a browser assertion names the browser session endpoint and has its own `typ`
   ([9.4](/docs/spec#assertion-audience)).
 - **Breaking: Secrets out of model context.** Following AIMS §8, Personal Agents MUST keep refresh
-  tokens, access tokens, private keys, authorization codes, and PKCE code verifiers out of model
-  context. Before, only Account Tokens were a MUST ([9.2](/docs/spec#secrets)).
+  tokens, access tokens, private keys, authorization codes, PKCE code verifiers, and device codes out
+  of model context. Before, only Account Tokens were a MUST ([9.2](/docs/spec#secrets)).
 - **OAuth extensions.** A new section 9.5 lists what the protocol adds to OAuth that no registry
   lists yet: `session_id`, `refresh_token_expires_in`, `poppy_domains`, its error codes, and the
-  `poppy-browser+jwt` type. Section 10 adds AIMS, RFC 9700, RFC 10027, and CIBA, and drops RFC 8628
+  `poppy-browser+jwt` type. Section 10 adds AIMS, RFC 9700, RFC 10027, and CIBA
   ([9.5](/docs/spec#oauth-extensions), [10](/docs/spec#references)).
 - **`extension_required` in conversations and Operations.** The conversation error table lists
   `extension_required`. An MCP tool that needs the Operations extension returns an ordinary tool
@@ -262,12 +268,14 @@ In progress, at [/docs/spec](/docs/spec). This list grows until 0.2 is published
   endpoint, personal agents
   browse only as signed-out visitors. The token endpoint's replay rule and `iss` in Direct Sign-In
   redirects cite the spec without overstating it ([Guides](/docs/guides)).
-- **Guides: sign-in without passwords or device codes.** The guides for Mediated and Device Sign-In
-  are removed. Personal agents send the authorization URL to the user when they can't receive the
-  redirect on the user's device, and never type the user's password into a company's website.
-  Companies offer a passkey and apply RFC 10027's cross-device mitigations on their consent page
-  ([Choosing how to sign in](/docs/guides#agent-choosing-sign-in), [Consent
-  pages](/docs/guides#company-consent)).
+- **Guides: sign-in without passwords, and device codes as a last resort.** The guides for
+  Mediated Sign-In are removed. Personal agents send the authorization URL to the user when they
+  can't receive the redirect on the user's device, use the device authorization grant only when
+  they can't do that, and never type the user's password into a company's website. Companies offer
+  a passkey, apply RFC 10027's cross-device mitigations on their consent page, and offer the device
+  authorization grant only with the mitigations RFC 10027 calls for ([Choosing how to sign
+  in](/docs/guides#agent-choosing-sign-in), [Device authorization
+  grant](/docs/guides#agent-device), [Consent pages](/docs/guides#company-consent)).
 
 ## Version 0.1 {#v0-1}
 

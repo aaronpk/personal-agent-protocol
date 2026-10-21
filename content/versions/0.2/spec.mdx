@@ -32,7 +32,7 @@ the parts that deployment needs and makes the choices AIMS leaves open:
 | Agent Identifier (§6)                 | The Personal Agent's `client_id`, an HTTPS URL that serves its Client ID Metadata Document (4.1, AIMS §10.10.3). AIMS uses a WIMSE identifier; a URL is used here because Personal Agents and Companies share no trust domain. |
 | Agent Credentials (§7)                | Keys published at the client's `jwks_uri`, and a separate, unpublished DPoP key for each User (4.1, 4.3).                                                                                                                         |
 | Agent Authentication (§9)             | `private_key_jwt` client authentication at the token endpoint, and DPoP proofs at the Company's resources (4.1, 4.3).                                                                                                              |
-| User Delegates Authorization (§10.4.1) | The authorization code grant with PKCE, when the User authorizes access to their account (4.4, 4.5).                                                                                                                              |
+| User Delegates Authorization (§10.4.1) | The authorization code grant with PKCE, when the User authorizes access to their account (4.4, 4.5), or the device authorization grant where it can't be used (4.6).                                                                                                                              |
 | Agent Obtains Own Authorization (§10.4.2) | The JWT authorization grant, which starts a pseudonymous Session with no account access (4.2).                                                                                                                                |
 | Discovery (§10.10)                    | Authorization server metadata, protected resource metadata, and Client ID Metadata Documents, found through `poppy.json` (section 3).                                                                                               |
 | Human in the Loop (§10.7)             | The [Operations extension](/docs/extensions/operations).                                                                                                                                                                             |
@@ -69,7 +69,7 @@ when they appear in capitals, as shown here.
 | Pseudonymous Session           | A Session with no account access. Its access tokens have no scopes (4.2).                                                                                                                                                                                |
 | Authorized Session             | A Session the User has authorized to use one Company account, through a user authorization grant. Its access tokens carry the scopes the User granted, such as `poppy:read` (4.4).                                                                       |
 | Access token                   | A short-lived OAuth access token for a Session, bound to the Personal Agent's DPoP key and used at the Company's APIs and conversations (4.2, 4.3).                                                                                                     |
-| Refresh token                  | The long-lived OAuth refresh token from user authorization, which lets the Personal Agent get access tokens for authorized Sessions later without asking the User again. It is used only at the Company's token and revocation endpoints (4.6).         |
+| Refresh token                  | The long-lived OAuth refresh token from user authorization, which lets the Personal Agent get access tokens for authorized Sessions later without asking the User again. It is used only at the Company's token and revocation endpoints (4.7).         |
 | DPoP proof                     | A signed JWT the Personal Agent sends with each request to show it holds the key its access token is bound to ([RFC 9449](https://www.rfc-editor.org/rfc/rfc9449), 4.3).                                                                                 |
 | **Conversations**              |                                                                                                                                                                                                                                                          |
 | Company Agent                  | A Company's own agent, reached through a supported conversation protocol.                                                                                                                                                                                |
@@ -197,9 +197,11 @@ domain could claim another Company's issuer and receive its tokens.
   "token_endpoint": "https://auth.example.com/oauth/token",
   "revocation_endpoint": "https://auth.example.com/oauth/revoke",
   "authorization_endpoint": "https://auth.example.com/oauth/authorize",
+  "device_authorization_endpoint": "https://auth.example.com/oauth/device",
   "grant_types_supported": [
     "urn:ietf:params:oauth:grant-type:jwt-bearer",
     "authorization_code",
+    "urn:ietf:params:oauth:grant-type:device_code",
     "refresh_token"
   ],
   "scopes_supported": ["poppy:read", "poppy:write", "addresses"],
@@ -216,13 +218,16 @@ domain could claim another Company's issuer and receive its tokens.
 The Personal Agent uses these fields of the metadata:
 
 - `issuer` and `poppy_domains`, which it checks against `poppy.json` (above). Required.
-- `token_endpoint` issues access and refresh tokens (4.2, 4.6). Required.
-- `revocation_endpoint` revokes refresh tokens (4.7). Required.
+- `token_endpoint` issues access and refresh tokens (4.2, 4.7). Required.
+- `revocation_endpoint` revokes refresh tokens (4.8). Required.
 - `grant_types_supported` MUST include `urn:ietf:params:oauth:grant-type:jwt-bearer` (4.2). A
   Company that supports user authorization (4.4) also lists `authorization_code` and
   `refresh_token`. Required.
 - `authorization_endpoint` starts user authorization (4.5). Required if `grant_types_supported`
   includes `authorization_code`.
+- `device_authorization_endpoint` starts the device authorization grant (4.6). Required if
+  `grant_types_supported` includes `urn:ietf:params:oauth:grant-type:device_code`, which a Company
+  lists only if it offers that grant.
 - `scopes_supported` lists the scopes user authorization can grant (4.4). Required if
   `grant_types_supported` includes `authorization_code`.
 - `token_endpoint_auth_methods_supported` MUST include `private_key_jwt`, and
@@ -294,7 +299,7 @@ The protocol uses the two OAuth token types:
 | Token         | What it is                                                                                                                                                           | Used at                                                                         |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | Access token  | A short-lived token for one Session, pseudonymous or authorized. It is bound to a DPoP key the Personal Agent holds (4.3).                                          | The Company's APIs and conversations                                            |
-| Refresh token | A long-lived token from user authorization. It stands for the User's grant to this Personal Agent to use their account.                                            | Only the Company's token and revocation endpoints, to get access tokens (4.6)   |
+| Refresh token | A long-lived token from user authorization. It stands for the User's grant to this Personal Agent to use their account.                                            | Only the Company's token and revocation endpoints, to get access tokens (4.7)   |
 
 A Session starts pseudonymous: the Company knows which Personal Agent is asking and can recognize
 the same User over time, but not who the User is. When a task needs the User's account, the User
@@ -309,14 +314,15 @@ The steps, in the order they usually happen:
 | ----------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------- |
 | Start a Session (4.2)         | `token_endpoint` with the JWT authorization grant       | A new pseudonymous Session and an access token for it                |
 | Renew an access token (4.2)   | The same, with `session_id`                             | A new access token for the same pseudonymous Session                 |
-| Authorize (4.4, 4.5)          | The authorization code grant                            | A refresh token, and an access token for the now authorized Session  |
-| Use the refresh token (4.6)   | `token_endpoint` with the refresh token                 | An access token for a new or existing authorized Session             |
-| Revoke (4.7)                  | `revocation_endpoint` with the refresh token            | The grant is revoked, and Sessions continue pseudonymous             |
+| Authorize (4.4–4.6)           | The authorization code grant, or the device grant       | A refresh token, and an access token for the now authorized Session  |
+| Use the refresh token (4.7)   | `token_endpoint` with the refresh token                 | An access token for a new or existing authorized Session             |
+| Revoke (4.8)                  | `revocation_endpoint` with the refresh token            | The grant is revoked, and Sessions continue pseudonymous             |
 
 The endpoints come from the Company's authorization server metadata (3.2). This section profiles
 OAuth 2.0 ([RFC 6749](https://www.rfc-editor.org/rfc/rfc6749)) with the JWT authorization grant
 and client authentication ([RFC 7523](https://www.rfc-editor.org/rfc/rfc7523)), PKCE ([RFC
-7636](https://www.rfc-editor.org/rfc/rfc7636)), DPoP ([RFC
+7636](https://www.rfc-editor.org/rfc/rfc7636)), the device authorization grant ([RFC
+8628](https://www.rfc-editor.org/rfc/rfc8628)) for Companies that offer it, DPoP ([RFC
 9449](https://www.rfc-editor.org/rfc/rfc9449)), resource indicators ([RFC
 8707](https://www.rfc-editor.org/rfc/rfc8707)), and token revocation ([RFC
 7009](https://www.rfc-editor.org/rfc/rfc7009)), and follows the OAuth 2.0 Security Best Current
@@ -484,7 +490,7 @@ grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer
 
 The Company checks that the Session belongs to the same `client_id` and subject as the assertion,
 and returns a new access token for it. An authorized Session is renewed with the refresh token
-instead (4.6). The Company decides how long a Session lasts. If it has ended, the Company
+instead (4.7). The Company decides how long a Session lasts. If it has ended, the Company
 returns `invalid_session`, and the Personal Agent starts a new Session.
 
 **Token format.** Access tokens are issued by the Company and are opaque to the Personal Agent.
@@ -531,8 +537,8 @@ token is useless without it. The Personal Agent MUST use a different key pair fo
 identifier (4.2), so Companies can't link Users by their keys, and MAY use a new one for each
 Session. It keeps the private key to itself and signs a new proof for every request to the token
 endpoint and every request that carries an access token. The only exception is a request for a
-Bearer token for an MCP server (below). Requests that carry neither, such as revocation (4.7), don't
-need a proof. A proof is a JWT with the public key in its header:
+Bearer token for an MCP server (below). Requests that carry neither, such as revocation (4.8)
+and device authorization (4.6), don't need a proof. A proof is a JWT with the public key in its header:
 
 ```json label="DPoP proof (JWT header and payload)"
 {
@@ -590,7 +596,7 @@ error in the `WWW-Authenticate: DPoP` header (section 6).
 An MCP server supports DPoP if its protected resource metadata (section 6) lists
 `dpop_signing_alg_values_supported`, as [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) §2
 defines. To get a token for an MCP server, the Personal Agent sends the request that starts a
-Session (4.2, 4.6) or renews its token (4.2, or 4.6 for an authorized Session), and MUST include
+Session (4.2, 4.7) or renews its token (4.2, or 4.7 for an authorized Session), and MUST include
 `resource` set to the MCP server's `url` from `poppy.json`, as MCP authorization requires. The
 Company chooses the token type by that server:
 
@@ -618,7 +624,7 @@ access token sent with the `Bearer` scheme. It still accepts Bearer tokens from 
 don't implement this protocol (section 6).
 
 For example, to get a token for an MCP server that doesn't support DPoP, for an authorized Session,
-the Personal Agent sends its refresh token (4.6) with `resource` and without a proof:
+the Personal Agent sends its refresh token (4.7) with `resource` and without a proof:
 
 ```http label="Request: Personal Agent → Company"
 POST https://auth.example.com/oauth/token
@@ -667,37 +673,29 @@ keep their own response bodies.
 ### 4.4 User authorization {#sign-in}
 
 A Session doesn't need user authorization. When a task needs account access and the Personal Agent
-has no refresh token that covers it (4.6), the Personal Agent asks the User to authorize access with
+has no refresh token that covers it (4.7), the Personal Agent asks the User to authorize access with
 the authorization code grant (4.5). This is the grant AIMS §10.4.1 names for a User delegating
 authorization to an agent. A Company supports user authorization if its authorization server
 metadata lists `authorization_code` in `grant_types_supported` and has an `authorization_endpoint`
 (3.2). A Company without them offers only pseudonymous Sessions.
+
+A Company MAY also offer the device authorization grant (4.6). It carries a greater risk of
+phishing than the authorization code grant, so Personal Agents SHOULD use the authorization code
+grant whenever they can, and use the device authorization grant only when they can't, as 4.6
+describes.
 
 The User authenticates and approves access on the Company's own page. A Company can't always verify
 that the User did this rather than the Personal Agent, which could complete the page itself.
 Personal Agents MUST NOT complete the authorization page for the User. Companies MAY revoke the
 `client_id` of a Personal Agent that does (4.1).
 
-**Not in this profile.** Two other ways of getting user authorization are left out on purpose:
-
-- **The User's credentials.** A Personal Agent never needs the User's password or other
-  credentials for a Company: as AIMS §10.4.1 puts it, OAuth removes the need for the agent to have
-  them. The OAuth 2.0 Security Best Current Practice says the resource owner password credentials
-  grant MUST NOT be used ([RFC 9700](https://www.rfc-editor.org/rfc/rfc9700) §2.4), and an endpoint
-  that accepts the User's credentials from a Personal Agent is the same grant under another name.
-  Personal Agents MUST NOT collect a User's credentials for a Company or submit them to the Company,
-  and Companies MUST NOT offer Personal Agents a way to submit them.
-- **The device authorization grant.** [RFC 10027](https://www.rfc-editor.org/rfc/rfc10027) (BCP 247)
-  says to use the device authorization grant only when no other cross-device protocol is viable, to
-  avoid it for sensitive or high-value resources, and never when the User is on the same device
-  (§6.2.1.5). Its user code travels over an unauthenticated channel, so an attacker who starts a
-  flow can get the User to approve it (§4). For a Personal Agent the risk is worse: the agent shows
-  whatever code and link a Company returns, so a malicious Company could pass off another Company's
-  authorization page as its own. A Personal Agent that can't receive a redirect on the User's device
-  still uses the authorization code grant, with a redirect URI it controls, and sends the
-  authorization URL to the User (4.5). Client-Initiated Backchannel Authentication
-  ([CIBA](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)),
-  which AIMS §10.7 describes, is a candidate for a later version.
+**Not in this profile: the User's credentials.** A Personal Agent never needs the User's password
+or other credentials for a Company: as AIMS §10.4.1 puts it, OAuth removes the need for the agent to
+have them. The OAuth 2.0 Security Best Current Practice says the resource owner password credentials
+grant MUST NOT be used ([RFC 9700](https://www.rfc-editor.org/rfc/rfc9700) §2.4), and an endpoint
+that accepts the User's credentials from a Personal Agent is the same grant under another name.
+Personal Agents MUST NOT collect a User's credentials for a Company or submit them to the Company,
+and Companies MUST NOT offer Personal Agents a way to submit them.
 
 #### Scopes
 
@@ -725,7 +723,7 @@ Scopes say what account access a user authorization grants. The protocol defines
   rejected with `invalid_scope`.
 - If a task needs more access than the refresh token allows, the Personal Agent asks the User to
   authorize again, requesting all the scopes it needs. The new refresh token replaces the old one,
-  which the Personal Agent SHOULD revoke (4.7). A pending or failed authorization leaves existing
+  which the Personal Agent SHOULD revoke (4.8). A pending or failed authorization leaves existing
   tokens unchanged.
 
 User authorization ends with the Company returning a refresh token, and an access token for the
@@ -744,7 +742,7 @@ checks `scope` before continuing.
 }
 ```
 
-- `refresh_token` is the refresh token (4.6).
+- `refresh_token` is the refresh token (4.7).
 - `refresh_token_expires_in` is the refresh token's lifetime in seconds, if the Company sets one.
   After it, the User authorizes again.
 - `scope` lists the scopes granted. It is always present for an authorized Session (4.2).
@@ -756,17 +754,17 @@ granted scopes, and when it expires. It also keeps a record for each Session: th
 subject, and the account the Session is authorized for, if any.
 
 A Session is authorized for at most one account. Once it has been, it can't switch to another, even
-after the authorization is revoked (4.7): the Company returns `account_mismatch`, and the Personal
+after the authorization is revoked (4.8): the Company returns `account_mismatch`, and the Personal
 Agent starts a new Session. If the User authorizes a different account than the Session's, the code
-exchange returns `account_mismatch` and issues no tokens. The User then authorizes again in a new
-Session. A User with two accounts at the same Company, such as a personal and a business account,
-has a refresh token for each and uses separate Sessions for them.
+exchange or device grant returns `account_mismatch` and issues no tokens. The User then authorizes
+again in a new Session. A User with two accounts at the same Company, such as a personal and a
+business account, has a refresh token for each and uses separate Sessions for them.
 
 Each access token reflects the Session as it was when the token was issued. Several tasks can share
 one Session, so one may still hold a pseudonymous token after another task got the Session
 authorized. A request with that token is handled as pseudonymous, and an account action fails with
 `insufficient_scope` (section 6). Before asking the User to authorize, the Personal Agent SHOULD
-check whether it already holds a refresh token that covers the task (4.6).
+check whether it already holds a refresh token that covers the task (4.7).
 
 ### 4.5 Authorization code grant {#direct-sign-in}
 
@@ -831,7 +829,138 @@ The Company verifies the code, the verifier, and the client assertion, and check
 belongs to the same `client_id`. It returns a refresh token and an access token for that Session, as
 shown in 4.4. Errors follow OAuth 2.0, such as `invalid_grant` for an expired or reused code.
 
-### 4.6 Refresh tokens {#account-tokens}
+### 4.6 Device authorization grant {#device-sign-in}
+
+The OAuth 2.0 device authorization grant ([RFC 8628](https://www.rfc-editor.org/rfc/rfc8628)) lets
+the User authorize on a different device from the Personal Agent. The Personal Agent shows the User
+a link and a short code, and the User authenticates and approves access on the Company's page on
+whatever device they like, such as their phone. It is for Personal Agents that can't receive a
+redirect from the authorization code grant (4.5), and for Companies that already offer the grant. A
+Company that offers it lists `urn:ietf:params:oauth:grant-type:device_code` in
+`grant_types_supported` and gives the `device_authorization_endpoint` in its authorization server
+metadata (3.2).
+
+#### Security considerations
+
+The device authorization grant is a cross-device flow, and Companies that offer it and Personal
+Agents that use it MUST follow the best practices for cross-device flows in [RFC
+10027](https://www.rfc-editor.org/rfc/rfc10027) (BCP 247) §2:
+
+- A Company MUST assess the risk before offering the grant, and SHOULD NOT offer it if the risk
+  can't be mitigated enough. RFC 10027 §6.2.1.5 says to use the grant only when no other
+  cross-device protocol is viable, and to avoid it for sensitive, high-value, or business-critical
+  resources. A Company SHOULD limit the scopes the grant can grant to those whose loss the User and
+  Company could recover from (§6.1.9), for example `poppy:read` without `poppy:write`, and MUST
+  NOT grant scopes beyond those requested.
+- A Company MUST select mitigations from RFC 10027 §6.1 that address its assessment, including at
+  least short-lived user codes (§6.1.2), user codes that can be used only once (§6.1.3), rate
+  limits (§6.1.11), and a consent page that tells the User who started the request and makes
+  declining as easy as approving (§6.1.14). Access tokens are already short-lived and DPoP-bound
+  (§6.1.10, §6.1.12).
+- A Personal Agent MUST NOT use the device authorization grant when it can use the authorization
+  code grant, including whenever the User can open the authorization URL on the device they are
+  using to talk to the Personal Agent. RFC 10027 §6.2.1.5 says not to use the grant on the same
+  device.
+
+#### Phishing
+
+The device authorization grant is much easier to use for phishing than the authorization code
+grant, and Companies and Personal Agents need to treat it that way.
+
+In the authorization code grant, the Company sends the code to the `redirect_uri` registered by the
+client that started the request, and PKCE ties the code to that client (4.5). In the device
+authorization grant, nothing ties the person who approves the request to the client that started
+it: whoever holds the `device_code` gets the tokens. An attacker can start a request at a Company,
+then get the User to open the link and enter the code with a pretext sent by email, by message, or
+on a web page, such as "enter this code to verify your account." The User sees the Company's real
+page, signs in for real, and approves, and the attacker receives a refresh token for the User's
+account. This is the exploit RFC 10027 §4.1.1 describes, and it has been used in device code
+phishing campaigns against large identity providers. Phishing-resistant authentication such as a
+passkey doesn't prevent it, since the User does authenticate to the real Company.
+
+This protocol makes the attack easier in three ways:
+
+- Any Personal Agent can use a Company with no prior registration (4.1), so an attacker can start a
+  request as a Personal Agent of its own at any Company that offers the grant.
+- The User authorizes on a page they reach from a link and code relayed to them, not from a redirect
+  they started, so a User who has been taught that their Personal Agent will show them codes to
+  enter is primed to enter one from an attacker.
+- The Personal Agent shows whatever link and code the Company returns, so a malicious Company could
+  pass off another Company's authorization page as its own, and the User would approve access there
+  for the Company that asked.
+
+To reduce the risk:
+
+- Before showing the link and code, the Personal Agent MUST check that the link's host is the host
+  of `auth.issuer` or a domain in the issuer's `poppy_domains` (3.2), or a subdomain of either, and
+  MUST show the Company's `organization.name` and domain with them.
+- The Personal Agent MUST show the link and code only to the User it started the request for, and
+  only in the conversation where the User asked for the task, and SHOULD tell the User not to enter
+  a code that they didn't ask for.
+- The Company's page MUST show which Personal Agent is asking, using the name and logo from its
+  metadata document, and the requested scopes. It SHOULD tell the User to approve only if they asked
+  that Personal Agent to use their account just now, and SHOULD warn that a code from anyone else is
+  a phishing attempt (RFC 10027 §6.1.14).
+- Opening the link MUST NOT approve the request by itself, even when the link includes the code.
+- The Company SHOULD notify the User through a channel it already has with them, such as email,
+  when a Personal Agent gains access this way, so the User can revoke it (4.8) if they didn't
+  expect it (RFC 10027 §6.1.6).
+
+#### Steps
+
+**1. Start the request.** The Personal Agent sends the scopes it needs, with its client assertion:
+
+```http label="Request: Personal Agent → Company"
+POST https://auth.example.com/oauth/device
+Content-Type: application/x-www-form-urlencoded
+
+scope=poppy%3Aread
+&client_id=https%3A%2F%2Fagent.example%2Fagent.json
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=eyJhbGciOiJFUzI1NiIs…
+```
+
+```json label="Response: Company → Personal Agent"
+{
+  "device_code": "GmRhmhcxhwAzkoEqiMEg_DnyEysNkuNhszIySk9eS",
+  "user_code": "WDJB-MJHT",
+  "verification_uri": "https://auth.example.com/device",
+  "verification_uri_complete": "https://auth.example.com/device?user_code=WDJB-MJHT",
+  "expires_in": 300,
+  "interval": 5
+}
+```
+
+**2. The User authenticates and approves.** After the checks above, the Personal Agent shows the
+User `verification_uri` and `user_code`, or `verification_uri_complete` as a link or QR code. It
+keeps `device_code` private (9.2). The User authenticates on the Company's page, as in 4.5, and
+approves some or all of the requested scopes, or declines.
+
+**3. The Personal Agent waits.** Every `interval` seconds, the Personal Agent asks the
+`token_endpoint` whether the User has finished, with its client assertion, a DPoP proof, and the
+`session_id`:
+
+```http label="Request: Personal Agent → Company"
+POST https://auth.example.com/oauth/token
+Content-Type: application/x-www-form-urlencoded
+DPoP: eyJ0eXAiOiJkcG9wK2p3dCIs…
+
+grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code
+&device_code=GmRhmhcxhwAzkoEqiMEg_DnyEysNkuNhszIySk9eS
+&session_id=ses_2Lm0
+&client_id=https%3A%2F%2Fagent.example%2Fagent.json
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=eyJhbGciOiJFUzI1NiIs…
+```
+
+Until the User finishes, the Company returns `authorization_pending`, or `slow_down` to ask the
+Personal Agent to wait longer between requests. Once the User approves, the Company checks that the
+Session belongs to the same `client_id` and returns a refresh token and an access token for that
+Session, as shown in 4.4. If the User declines, it returns `access_denied`, and if the request runs
+past `expires_in`, `expired_token`. The Personal Agent stops asking after either.
+
+
+### 4.7 Refresh tokens {#account-tokens}
 
 A refresh token lets the Personal Agent get access tokens for authorized Sessions later without
 asking the User to authorize again ([RFC 6749, section
@@ -873,7 +1002,7 @@ it (below).
 - Personal Agents MUST store refresh tokens as secrets, and MUST NOT put them in model context,
   conversation messages, logs, or URLs.
 
-### 4.7 Revoking authorization {#sign-out}
+### 4.8 Revoking authorization {#sign-out}
 
 Revoking the authorization removes the Personal Agent's access to the User's account. The Personal
 Agent revokes its refresh token at the Company's `revocation_endpoint` ([RFC
@@ -1061,10 +1190,10 @@ server's protected resource metadata URL ([RFC 9728](https://www.rfc-editor.org/
 
 | Error                | Status | Meaning                                                                                                                                                                                          |
 | -------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `invalid_token`      | 401    | The token is missing or expired. The Personal Agent gets a new one (4.2, 4.6).                                                                                                                   |
+| `invalid_token`      | 401    | The token is missing or expired. The Personal Agent gets a new one (4.2, 4.7).                                                                                                                   |
 | `invalid_dpop_proof` | 401    | The DPoP proof is missing or invalid (4.3).                                                                                                                                                      |
 | `use_dpop_nonce`     | 401    | The Company requires a nonce, given in the `DPoP-Nonce` header (4.3). The Personal Agent retries with a new proof that includes it.                                                              |
-| `insufficient_scope` | 403    | The token lacks the scopes the request needs, which the response names in the `scope` attribute. A pseudonymous token has no scopes, so this is also the answer to a request that needs the User's account. The Personal Agent uses a refresh token that covers them (4.6), or asks the User to authorize (4.4), and retries, unless the User revoked its access (4.7). |
+| `insufficient_scope` | 403    | The token lacks the scopes the request needs, which the response names in the `scope` attribute. A pseudonymous token has no scopes, so this is also the answer to a request that needs the User's account. The Personal Agent uses a refresh token that covers them (4.7), or asks the User to authorize (4.4), and retries, unless the User revoked its access (4.8). |
 | `extension_required` | 403    | The request needs an extension the Personal Agent doesn't list, named in the `extension` attribute (3.3). An MCP server returns it only to refuse the Personal Agent entirely, not for one tool. |
 
 Because every token is issued to a known `client_id` and subject, the Company always knows a request
@@ -1538,7 +1667,7 @@ message, so a User in a Direct Conversation sees the request:
 
 `error` is `insufficient_scope`, with the same meaning as the error in section 6, and `scope` names
 the scopes needed. The Personal Agent responds as it would to that error, with its refresh token
-(4.6) or by asking the User to authorize (4.4). It then continues the
+(4.7) or by asking the User to authorize (4.4). It then continues the
 same conversation with the new token. The conversation stays open meanwhile.
 
 A conversation isn't tied to one access token or Session. The Personal Agent MAY switch to a new
@@ -1552,7 +1681,7 @@ conversation. Sending a message does not authorize the requested account action.
 
 Once a conversation has used the User's account, a request on it from a token for the same User that
 isn't authorized for that account gets `insufficient_scope`. After a revocation, the conversation
-stays open, as 4.7 describes.
+stays open, as 4.8 describes.
 
 ### 7.12 Closing {#closing}
 
@@ -1654,8 +1783,8 @@ direct the model, known as prompt injection.
 A model can be led to repeat what is in its context, so a secret in context can leak through any
 message the Personal Agent sends. AIMS §8 states the rule: the model MUST NOT have access to the
 agent's credentials, or to the credentials it uses to access tools and services. Personal Agents
-MUST keep refresh tokens (4.6), access tokens, private keys, and authorization codes and PKCE code
-verifiers out of model context, and sign and send requests in code the model can't read. A
+MUST keep refresh tokens (4.7), access tokens, private keys, authorization codes and PKCE code
+verifiers, and device codes (4.6) out of model context, and sign and send requests in code the model can't read. A
 Personal Agent never holds the User's credentials for a Company (4.4). The
 [guides](/docs/guides#both-secrets) list these secrets and how to handle them.
 
@@ -1710,6 +1839,6 @@ This draft uses these standards and versions:
 | Framework                     | [draft-ietf-wimse-aims](https://datatracker.ietf.org/doc/draft-ietf-wimse-aims/)                                                                                                                                                                                                                                          |
 | OAuth                         | [RFC 6749](https://www.rfc-editor.org/rfc/rfc6749), [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750), [RFC 7009](https://www.rfc-editor.org/rfc/rfc7009), [RFC 8414](https://www.rfc-editor.org/rfc/rfc8414), [RFC 9700](https://www.rfc-editor.org/rfc/rfc9700)                                                        |
 | Agent identity and assertions | [OAuth Client ID Metadata Document](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/), [RFC 7519](https://www.rfc-editor.org/rfc/rfc7519), [RFC 7523](https://www.rfc-editor.org/rfc/rfc7523), [draft-ietf-oauth-rfc7523bis](https://datatracker.ietf.org/doc/draft-ietf-oauth-rfc7523bis/) |
-| User authorization            | [RFC 7636](https://www.rfc-editor.org/rfc/rfc7636), [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207), [RFC 10027](https://www.rfc-editor.org/rfc/rfc10027), [CIBA](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html) (informative)                                              |
+| User authorization            | [RFC 7636](https://www.rfc-editor.org/rfc/rfc7636), [RFC 9207](https://www.rfc-editor.org/rfc/rfc9207), [RFC 8628](https://www.rfc-editor.org/rfc/rfc8628), [RFC 10027](https://www.rfc-editor.org/rfc/rfc10027), [CIBA](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html) (informative)                                              |
 | Token binding and audience    | [RFC 9449](https://www.rfc-editor.org/rfc/rfc9449), [RFC 8707](https://www.rfc-editor.org/rfc/rfc8707)                                                                                                                                                                                                                    |
 | APIs                          | [OpenAPI Specification 3.1](https://spec.openapis.org/oas/v3.1.1.html), [Model Context Protocol 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18), [RFC 9728](https://www.rfc-editor.org/rfc/rfc9728)                                                                                                 |

@@ -28,7 +28,7 @@ To handle them:
 
 - Keep them out of logs, telemetry, error reports, model context, conversation messages, and URLs.
   Tokens MUST NOT be sent in a URL ([4.3](/docs/spec#sending-tokens)), and account tokens MUST NOT
-  go in model context, messages, logs, or URLs ([4.6](/docs/spec#account-tokens)).
+  go in model context, messages, logs, or URLs ([4.7](/docs/spec#account-tokens)).
 - Redact the `Authorization`, `DPoP`, and `Cookie` headers and credential fields before a request
   reaches a logger or tracer.
 - Send `Cache-Control: no-store` on every response that carries a token or code.
@@ -61,7 +61,7 @@ Assertions and DPoP proofs are JWTs. To sign and verify them consistently:
   `kid`. Refetch each `jwks_uri` at most once per interval, such as 30 seconds, and count failed
   fetches too. Otherwise a stream of bad assertions can flood the personal agent's server.
 - Rotating signing keys doesn't affect account tokens. They are tied to the `client_id`, not a key
-  ([4.6](/docs/spec#account-tokens)).
+  ([4.7](/docs/spec#account-tokens)).
 
 ### Fetching metadata safely {#both-fetching}
 
@@ -201,7 +201,7 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 ### Storing tokens {#agent-tokens}
 
-- Account tokens MUST be stored as secrets ([4.6](/docs/spec#account-tokens)). Encrypt them at rest,
+- Account tokens MUST be stored as secrets ([4.7](/docs/spec#account-tokens)). Encrypt them at rest,
   apart from the model and its tools. Give tools a reference to the token, not the token.
 - Keep session tokens in memory and drop them when they expire.
 - Store account tokens by the company's full `auth.issuer`, as for [user IDs](#agent-user-ids), so a
@@ -212,7 +212,7 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
   tokens can be used by anyone who copies them. Each one is limited to one MCP server by `resource`,
   and you can also narrow it with `scope`.
 - When the company returns a new account token, you MUST use it from then on
-  ([4.6](/docs/spec#account-tokens)). Replace the stored one right away.
+  ([4.7](/docs/spec#account-tokens)). Replace the stored one right away.
 - After the user signs in again for more scopes, revoke the old account token
   ([4.4](/docs/spec#sign-in)).
 - On `invalid_grant` for an account token, delete it and continue signed out.
@@ -221,10 +221,11 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
 
 - Before asking the user to sign in, check whether an account token you hold already covers the task
   ([4.4](/docs/spec#sign-in)).
-- Sign-in is always the authorization code grant ([4.4](/docs/spec#sign-in)). The user's password
-  stays with the company, and you MUST NOT collect it.
+- Use the authorization code grant ([4.4](/docs/spec#sign-in)). Use the device authorization grant
+  only when you can't, and the company offers it ([4.6](/docs/spec#device-sign-in)). Either way,
+  the user's password stays with the company, and you MUST NOT collect it.
 - Ask for the fewest scopes the task needs. For a task that only looks things up, request a
-  read-only session token from a broader account token ([4.6](/docs/spec#account-tokens)).
+  read-only session token from a broader account token ([4.7](/docs/spec#account-tokens)).
 - The user may approve fewer scopes than you asked for. Check `scope` in the response before
   continuing.
 
@@ -239,8 +240,20 @@ Idempotency-Key: 4f1c2e8a-9b7d-4c3e-a5f6-0d8b1e2c3a4f
   company's `auth.issuer` (MUST, [4.5](/docs/spec#direct-sign-in)).
 - Use PKCE with `code_challenge_method=S256` ([4.5](/docs/spec#direct-sign-in)).
 - If you can't receive the redirect on the user's device, send the authorization URL to the user,
-  for example to their phone, with a redirect URI you control. Don't use the device authorization
-  grant ([4.4](/docs/spec#sign-in)).
+  for example to their phone, with a redirect URI you control.
+
+### Device authorization grant {#agent-device}
+
+- Use the device authorization grant only if you can't use the authorization code grant, even by
+  sending the user a link (MUST NOT, [4.6](/docs/spec#device-sign-in)). It is much easier to use for
+  phishing.
+- Before showing the link and code, check that the link's host belongs to the company's issuer or
+  `poppy_domains`, and show the company's name and domain with them (MUST,
+  [4.6](/docs/spec#device-sign-in)).
+- Show the link and code only to the user you started the request for, in the conversation where
+  they asked for the task. Tell them not to enter a code they didn't ask for.
+- Keep `device_code` out of model context (MUST, [9.2](/docs/spec#secrets)), and stop polling
+  after `access_denied` or `expired_token`.
 
 ### Native and distributed apps {#agent-native-apps}
 
@@ -326,9 +339,9 @@ reliably:
 
 - Session tokens should last hours, not days ([4.2](/docs/spec#starting-sessions)).
 - Check on each request whether the session is still signed in, so sign-out takes effect right away.
-  If you can't, keep session tokens to a few minutes ([4.7](/docs/spec#sign-out)).
+  If you can't, keep session tokens to a few minutes ([4.8](/docs/spec#sign-out)).
 - Don't stop accepted work because the session token that started it expired. A job can outlast the
-  token ([4.7](/docs/spec#sign-out)).
+  token ([4.8](/docs/spec#sign-out)).
 - Where work in progress can take consequential actions on the user's account, such as payments or
   changes that are hard to undo, tie it to the account token, so revoking access stops it right
   away.
@@ -360,14 +373,19 @@ The page where the user approves access in the authorization code grant
 - When the user opens the page on a different device from the personal agent, apply the
   cross-device mitigations in [RFC 10027](https://www.rfc-editor.org/rfc/rfc10027).
 - Don't offer personal agents a way to submit the user's password or other credentials
-  (MUST NOT, [4.4](/docs/spec#sign-in)), and don't offer the device authorization grant.
+  (MUST NOT, [4.4](/docs/spec#sign-in)).
+- Offer the device authorization grant only if your risk assessment says you can mitigate its
+  phishing risk, following RFC 10027 (MUST, [4.6](/docs/spec#device-sign-in)). Limit the scopes it
+  can grant, make user codes short-lived and single-use, rate-limit requests, and say on the consent
+  page which personal agent is asking and that the user should decline a code they didn't ask for.
+  Email the user when a personal agent connects this way.
 
 ### Account settings {#company-account-settings}
 
 - In account settings, list each connected personal agent with its name, domain, scopes, and when it
   was last used.
 - Offer a control to disconnect each one. Disconnecting revokes its account tokens and signs out its
-  sessions ([4.7](/docs/spec#sign-out)).
+  sessions ([4.8](/docs/spec#sign-out)).
 
 ### Browser sessions {#company-browsing}
 
@@ -445,7 +463,7 @@ rate limits by `client_id`, not by turning personal agents away.
   close it ([7.6](/docs/spec#streaming)).
 - When a session signs out, answer a signed-out token on its conversations that used the account
   with `insufficient_scope`, including reads of their events, so their account details can't be read
-  signed out ([4.7](/docs/spec#sign-out), [7.11](/docs/spec#conversation-sign-in)). Leave them
+  signed out ([4.8](/docs/spec#sign-out), [7.11](/docs/spec#conversation-sign-in)). Leave them
   open, so the user can sign in again and continue, or close them if your policy is to clear
   everything at sign-out.
 - Before closing an inactive conversation, say so in a message ([7.12](/docs/spec#closing)).

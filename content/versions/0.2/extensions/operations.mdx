@@ -128,7 +128,7 @@ An operation proposed in a pseudonymous Session can be used only in that Session
 proposed in an authorized Session belongs to the account instead: any Session of the same Personal
 Agent and User can read, confirm, and cancel it while that Session is authorized for the same
 account, for example after the original Session has ended. The Company checks the Session's state at
-each request, so after the authorization is revoked (spec 4.7), the original Session can't use the
+each request, so after the authorization is revoked (spec 4.8), the original Session can't use the
 operation either. A pseudonymous Session of the same Personal Agent and User gets
 `insufficient_scope` (spec section 6). The
 Company returns `operation_not_found` to anyone else.
