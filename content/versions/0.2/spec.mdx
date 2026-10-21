@@ -29,9 +29,9 @@ the parts that deployment needs and makes the choices AIMS leaves open:
 
 | AIMS                                  | This profile                                                                                                                                                                                                                         |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Agent Identifier (§6)                 | The Personal Agent's `client_id`, an HTTPS URL that serves its Client ID Metadata Document (4.1, AIMS §10.10.3). AIMS uses a WIMSE identifier; a URL is used here because Personal Agents and Companies share no trust domain. |
+| Agent Identifier (§6)                 | The Personal Agent's `client_id`, an HTTPS URL that serves its Client ID Metadata Document (4.1, AIMS §10.10.3). |
 | Agent Credentials (§7)                | Keys published at the client's `jwks_uri`, and a separate, unpublished DPoP key for each User (4.1, 4.3).                                                                                                                         |
-| Agent Authentication (§9)             | `private_key_jwt` client authentication at the token endpoint, and DPoP proofs at the Company's resources (4.1, 4.3).                                                                                                              |
+| Agent Authentication (§9)             | `private_key_jwt` client authentication at the token endpoint (4.1).                                                                                                              |
 | User Delegates Authorization (§10.4.1) | The authorization code grant with PKCE, when the User authorizes access to their account (4.4, 4.5), or the device authorization grant where it can't be used (4.6).                                                                                                                              |
 | Agent Obtains Own Authorization (§10.4.2) | The JWT authorization grant, which starts a pseudonymous Session with no account access (4.2).                                                                                                                                |
 | Discovery (§10.10)                    | Authorization server metadata, protected resource metadata, and Client ID Metadata Documents, found through `poppy.json` (section 3).                                                                                               |
@@ -407,7 +407,8 @@ the User's pairwise subject identifier in `sub`. Unlike most uses of this grant,
 assertion's issuer, and the subject is one the Company hasn't seen before: this is the agent
 obtaining its own authorization, as AIMS §10.4.2 describes, scoped to one pseudonymous User. Like
 every token request, it also carries the Personal Agent's client assertion (4.1) and a DPoP proof
-(4.3). Only a request for a Bearer token for an MCP server can leave the proof out.
+(4.3). Only a request for a Bearer token for an MCP server can leave the proof out if the MCP server
+doesn't support DPoP.
 
 ```http label="Request: Personal Agent → Company"
 POST https://auth.example.com/oauth/token
@@ -537,7 +538,7 @@ token is useless without it. The Personal Agent MUST use a different key pair fo
 identifier (4.2), so Companies can't link Users by their keys, and MAY use a new one for each
 Session. It keeps the private key to itself and signs a new proof for every request to the token
 endpoint and every request that carries an access token. The only exception is a request for a
-Bearer token for an MCP server (below). Requests that carry neither, such as revocation (4.8)
+Bearer token for an MCP server (below) if the MCP server does not support DPoP. Requests that carry neither, such as revocation (4.8)
 and device authorization (4.6), don't need a proof. A proof is a JWT with the public key in its header:
 
 ```json label="DPoP proof (JWT header and payload)"
