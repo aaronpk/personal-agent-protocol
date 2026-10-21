@@ -42,8 +42,8 @@ operations endpoint:
 }
 ```
 
-The endpoint accepts DPoP Session Tokens (spec 4.3). Like an API entry, it MAY include a `resource`
-to require tokens issued for it.
+The endpoint accepts DPoP-bound access tokens (spec 4.3). Like an API entry, it MAY include a
+`resource` to require tokens issued for it.
 
 A Personal Agent that supports operations lists the extension in its client metadata document (spec
 4.1):
@@ -124,12 +124,13 @@ can't change.
 
 ### 3.2 Who can use an operation {#ownership}
 
-An operation proposed in a signed-out Session can be used only in that Session. An operation
-proposed in a signed-in Session belongs to the account instead: any Session of the same Personal
-Agent and User can read, confirm, and cancel it while that Session is signed in to the same account,
-for example after the original Session has ended. The Company checks the Session's state at each
-request, so after the original Session signs out (spec 4.9), it can't use the operation either. A
-signed-out Session of the same Personal Agent and User gets `sign_in_required` (spec section 6). The
+An operation proposed in a pseudonymous Session can be used only in that Session. An operation
+proposed in an authorized Session belongs to the account instead: any Session of the same Personal
+Agent and User can read, confirm, and cancel it while that Session is authorized for the same
+account, for example after the original Session has ended. The Company checks the Session's state at
+each request, so after the authorization is revoked (spec 4.7), the original Session can't use the
+operation either. A pseudonymous Session of the same Personal Agent and User gets
+`insufficient_scope` (spec section 6). The
 Company returns `operation_not_found` to anyone else.
 
 The Company MUST keep an operation readable at least until it is final. How long it keeps final
@@ -261,9 +262,9 @@ Content-Type: application/json
 
 Before performing the action, the Company checks that:
 
-- The Session Token may use this operation (3.2).
-- The token has the scopes the action needs. If not, it returns `insufficient_scope` or
-  `sign_in_required` (spec section 6).
+- The access token may use this operation (3.2).
+- The token has the scopes the action needs. If not, it returns `insufficient_scope` (spec section
+  6).
 - `revision` is the latest revision. If not, it returns `terms_changed` with the current operation.
 - `approved_by` is allowed for this operation. If not, it returns `user_approval_required`.
 - The operation is `proposed` and hasn't expired. If it is in any other state, the Company returns
@@ -298,8 +299,8 @@ Content-Type: application/json
 }
 ```
 
-Once confirmed, the operation continues even if the Session Token expires or the User signs out. To
-stop it, the Personal Agent cancels it (section 7).
+Once confirmed, the operation continues even if the access token expires or the User revokes the
+authorization. To stop it, the Personal Agent cancels it (section 7).
 
 ## 6. Tracking and recovery {#tracking}
 
@@ -358,7 +359,8 @@ It doesn't prove that the User saw the terms or approved them. The Company can't
 Agent's interface, so `approved_by` works on trust, like the sign-in types (spec 4.4). A Company MAY
 revoke the `client_id` of a Personal Agent that confirms without the approval it claims. A Company
 that needs proof of the User's approval for an action can ask the User to approve on its own
-website, signed in, the way Direct Sign-In works. This extension doesn't define that step.
+website, signed in, the way the authorization code grant works. This extension doesn't define that
+step.
 
 ## 9. Errors {#errors}
 
